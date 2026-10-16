@@ -36,6 +36,7 @@ export default function AppLayout() {
             </li>
           ))}
         </ul>
+        <p className="mt-auto px-3 text-xs text-muted-foreground">v{__APP_VERSION__}</p>
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col lg:overflow-hidden">

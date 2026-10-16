@@ -42,8 +42,17 @@ pnpm --filter api migration:revert                                    # 마지�
 
 ## 버전
 
-[SemVer](https://semver.org/lang/ko/) `MAJOR.MINOR.PATCH`, 루트 `package.json` 의 `version` 이 기준.
+### 릴리즈 버전 — 저장소 전체에 하나
+
+[SemVer](https://semver.org/lang/ko/) `MAJOR.MINOR.PATCH`, **루트 `package.json` 의 `version` 이 유일한 기준**
+(apps 에는 version 없음. web 화면·Swagger 문서가 이 값을 자동으로 읽음)
 
 - `0.x.y` — 정식 출시 전. 기능 추가 시 MINOR(`0.1.0 → 0.2.0`), 버그 수정 시 PATCH(`0.1.0 → 0.1.1`)
 - `1.0.0` — 정식 출시
-- 배포할 때 `main` 에 태그: `git tag v0.1.0 && git push origin v0.1.0`
+- 배포 절차: `develop` → `main` 머지 → 루트 `version` 올림 → `git tag v0.2.0 && git push origin v0.2.0` → web·api 함께 배포
+
+### API 버전 — 릴리즈 버전과 별개
+
+- 일반 API: `/api/v1/...`. **호환이 깨지는 변경**(필드 삭제·의미 변경 등)일 때만 `v2` 추가, 옛 앱이 남아 있는 동안 `v1` 유지
+- 필드 추가처럼 호환되는 변경은 같은 버전에서 처리
+- 인증 API: `/api/auth/...` (버전 없음 — 리프레시 토큰 쿠키 경로 고정)
