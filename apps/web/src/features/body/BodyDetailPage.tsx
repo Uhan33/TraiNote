@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import WeightOverview from '@/components/WeightOverview'
-import { getBodyListQueryKey, useBodyList, useBodyRemove, useBodySave, useMembersList } from '@/api/generated'
+import BodyOverview from '@/components/BodyOverview'
+import { getBodyListQueryKey, useBodyList, useBodyRemove, useBodySave, useMembersList, type BodyRecordDto } from '@/api/generated'
 import { formatDateLabel, todayKey } from '@/features/workouts/data'
 
-// 회원 체중 — 요약·그래프 + 입력(같은 날짜면 수정) + 기록 목록(누르면 수정·삭제)
+// 회원 체중·체성분 — 요약·그래프 + 입력(같은 날짜면 수정) + 기록 목록(누르면 수정·삭제)
 export default function BodyDetailPage() {
   const { memberId: code = '' } = useParams()
   const navigate = useNavigate()
@@ -21,14 +21,26 @@ export default function BodyDetailPage() {
 
   const [date, setDate] = useState(todayKey())
   const [weight, setWeight] = useState('')
+  const [fat, setFat] = useState('')
+  const [muscle, setMuscle] = useState('')
   const existing = records.data?.find((r) => r.date === date)
-  const weightKg = Number.parseFloat(weight.replace(',', '.'))
-  const valid = Number.isFinite(weightKg) && weightKg >= 10 && weightKg <= 400
+  const weightKg = parse(weight)
+  const fatPct = parse(fat)
+  const muscleKg = parse(muscle)
+  const weightOk = weightKg !== null && weightKg >= 10 && weightKg <= 400
+  const fatOk = !fat.trim() || (fatPct !== null && fatPct >= 1 && fatPct <= 75)
+  const muscleOk = !muscle.trim() || (muscleKg !== null && muscleKg >= 5 && muscleKg <= 100)
+  const valid = weightOk && fatOk && muscleOk
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: getBodyListQueryKey(code) })
+  const fill = (r?: BodyRecordDto) => {
+    setWeight(r ? String(r.weightKg) : '')
+    setFat(r?.bodyFatPct?.toString() ?? '')
+    setMuscle(r?.skeletalMuscleKg?.toString() ?? '')
+  }
   const reset = () => {
     setDate(todayKey())
-    setWeight('')
+    fill()
   }
 
   if (members.isSuccess && !member) return <p className="py-16 text-center text-muted-foreground">회원을 찾을 수 없어요</p>
@@ -51,7 +63,7 @@ export default function BodyDetailPage() {
         {records.isPending ? (
           <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
         ) : (
-          <WeightOverview records={records.data ?? []} />
+          <BodyOverview records={records.data ?? []} />
         )}
 
         <form
@@ -59,26 +71,25 @@ export default function BodyDetailPage() {
           onSubmit={(e) => {
             e.preventDefault()
             if (!valid) return
-            save.mutate({ code, date, data: { weightKg: Math.round(weightKg * 100) / 100 } }, { onSuccess: () => void refresh().then(reset) })
+            save.mutate(
+              { code, date, data: { weightKg: round(weightKg!, 2), bodyFatPct: fatPct === null ? null : round(fatPct, 1), skeletalMuscleKg: muscleKg === null ? null : round(muscleKg, 2) } },
+              { onSuccess: () => void refresh().then(reset) },
+            )
           }}
         >
-          <p className="font-semibold">{existing ? '체중 수정' : '체중 기록'}</p>
+          <p className="font-semibold">{existing ? '기록 수정' : '기록 추가'}</p>
           <div className="grid grid-cols-[1fr_1fr] gap-2">
             <Input type="date" value={date} max={todayKey()} onChange={(e) => setDate(e.target.value || todayKey())} aria-label="날짜" className="h-11 text-base md:text-base" />
-            <div className="relative">
-              <Input
-                inputMode="decimal"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                placeholder={existing ? String(existing.weightKg) : '0.0'}
-                aria-label="체중(kg)"
-                className="h-11 pr-9 text-right text-base md:text-base"
-              />
-              <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">kg</span>
-            </div>
+            <UnitInput label="체중" unit="kg" value={weight} onChange={setWeight} placeholder={existing ? String(existing.weightKg) : '0.0'} />
           </div>
-          {existing && <p className="text-xs text-muted-foreground">{formatDateLabel(date)}에 이미 {existing.weightKg}kg 기록이 있어요. 저장하면 바뀌어요.</p>}
-          {weight && !valid && <p className="text-xs text-destructive">10~400kg 사이로 입력하세요</p>}
+          <div className="grid grid-cols-[1fr_1fr] gap-2">
+            <UnitInput label="체지방률 (선택)" unit="%" value={fat} onChange={setFat} placeholder="체지방률" />
+            <UnitInput label="골격근량 (선택)" unit="kg" value={muscle} onChange={setMuscle} placeholder="골격근량" />
+          </div>
+          {existing && <p className="text-xs text-muted-foreground">{formatDateLabel(date)}에 이미 기록이 있어요. 저장하면 바뀌어요.</p>}
+          {weight && !weightOk && <p className="text-xs text-destructive">체중은 10~400kg 사이로 입력하세요</p>}
+          {!fatOk && <p className="text-xs text-destructive">체지방률은 1~75% 사이로 입력하세요</p>}
+          {!muscleOk && <p className="text-xs text-destructive">골격근량은 5~100kg 사이로 입력하세요</p>}
           {save.error && <p className="text-xs text-destructive">{save.error.message}</p>}
           <div className="flex gap-2">
             {existing && (
@@ -111,11 +122,14 @@ export default function BodyDetailPage() {
                       type="button"
                       onClick={() => {
                         setDate(r.date)
-                        setWeight(String(r.weightKg))
+                        fill(r)
                       }}
-                      className={`flex h-12 w-full items-center justify-between px-4 text-left active:bg-muted ${r.date === date ? 'bg-muted' : ''}`}
+                      className={`flex min-h-12 w-full items-center justify-between px-4 py-2 text-left active:bg-muted ${r.date === date ? 'bg-muted' : ''}`}
                     >
-                      <span className="text-sm">{formatDateLabel(r.date)}</span>
+                      <span className="flex flex-col">
+                        <span className="text-sm">{formatDateLabel(r.date)}</span>
+                        <CompositionText record={r} />
+                      </span>
                       <span className="flex items-baseline gap-2">
                         {diff !== null && diff !== 0 && (
                           <span className="text-xs text-muted-foreground">
@@ -134,4 +148,33 @@ export default function BodyDetailPage() {
       </div>
     </div>
   )
+}
+
+const parse = (v: string) => {
+  const n = Number.parseFloat(v.replace(',', '.'))
+  return Number.isFinite(n) ? n : null
+}
+
+const round = (n: number, digits: number) => Math.round(n * 10 ** digits) / 10 ** digits
+
+function UnitInput({ label, unit, value, onChange, placeholder }: { label: string; unit: string; value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <div className="relative">
+      <Input
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={label}
+        className="h-11 pr-9 text-right text-base md:text-base"
+      />
+      <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">{unit}</span>
+    </div>
+  )
+}
+
+// 체지방률·골격근량 한 줄 (있을 때만)
+export function CompositionText({ record }: { record: BodyRecordDto }) {
+  const parts = [record.bodyFatPct !== null && `체지방 ${record.bodyFatPct}%`, record.skeletalMuscleKg !== null && `골격근 ${record.skeletalMuscleKg}kg`].filter(Boolean)
+  return parts.length ? <span className="text-xs text-muted-foreground">{parts.join(' · ')}</span> : null
 }

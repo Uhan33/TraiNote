@@ -1,7 +1,10 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 import { Member } from '../members/member.entity.js';
 
-// 회원·날짜당 체중 1개. 인바디 연동 등으로 항목이 늘면 컬럼 추가
+// numeric 은 pg 드라이버가 문자열로 주므로 숫자로 변환
+const numeric = { to: (v: number | null) => v, from: (v: string | null) => (v === null ? null : Number(v)) };
+
+// 회원·날짜당 1개. 체중 필수, 체지방률·골격근량은 인바디 잰 날만 (선택)
 @Entity('body_record')
 @Unique(['memberId', 'recordDate'])
 export class BodyRecord {
@@ -18,15 +21,14 @@ export class BodyRecord {
   @Column({ name: 'record_date', type: 'date' })
   recordDate: string;
 
-  // numeric 은 pg 드라이버가 문자열로 주므로 숫자로 변환
-  @Column({
-    name: 'weight_kg',
-    type: 'numeric',
-    precision: 5,
-    scale: 2,
-    transformer: { to: (v: number) => v, from: (v: string | null) => (v === null ? null : Number(v)) },
-  })
+  @Column({ name: 'weight_kg', type: 'numeric', precision: 5, scale: 2, transformer: numeric })
   weightKg: number;
+
+  @Column({ name: 'body_fat_pct', type: 'numeric', precision: 4, scale: 1, nullable: true, transformer: numeric })
+  bodyFatPct: number | null;
+
+  @Column({ name: 'skeletal_muscle_kg', type: 'numeric', precision: 5, scale: 2, nullable: true, transformer: numeric })
+  skeletalMuscleKg: number | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

@@ -22,7 +22,7 @@ export class BodyController {
   @ApiNoContentResponse({ description: '같은 날짜면 덮어쓰기' })
   @ApiNotFoundResponse()
   save(@CurrentTrainerId() trainerId: string, @Param('code') code: string, @Param('date') date: string, @Body() dto: SaveBodyRecordDto) {
-    return this.body.save(trainerId, code, date, dto.weightKg);
+    return this.body.save(trainerId, code, date, dto);
   }
 
   @Delete(':date')

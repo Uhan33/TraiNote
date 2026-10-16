@@ -36,18 +36,20 @@ describe('body records (e2e)', () => {
 
     await a.put(`${url}/2026-10-10`).send({ weightKg: 72.4 }).expect(204);
     await a.put(`${url}/2026-10-01`).send({ weightKg: 73.15 }).expect(204);
-    await a.put(`${url}/2026-10-10`).send({ weightKg: 72.1 }).expect(204); // 덮어쓰기
+    await a.put(`${url}/2026-10-10`).send({ weightKg: 72.1, bodyFatPct: 22.4, skeletalMuscleKg: 28.35 }).expect(204); // 덮어쓰기 + 인바디 항목
     await a.put(`${url}/2026-10-12`).send({ weightKg: 71.8 }).expect(204);
     await a.delete(`${url}/2026-10-12`).expect(204);
 
     expect((await a.get(url).expect(200)).body).toEqual([
-      { date: '2026-10-01', weightKg: 73.15 },
-      { date: '2026-10-10', weightKg: 72.1 },
+      { date: '2026-10-01', weightKg: 73.15, bodyFatPct: null, skeletalMuscleKg: null },
+      { date: '2026-10-10', weightKg: 72.1, bodyFatPct: 22.4, skeletalMuscleKg: 28.35 },
     ]);
 
     await a.put(`${url}/2026-10-11`).send({ weightKg: 5 }).expect(400);
     await a.put(`${url}/2026-10-11`).send({ weightKg: '72' }).expect(400);
     await a.put(`${url}/2026-02-31`).send({ weightKg: 72 }).expect(400);
+    await a.put(`${url}/2026-10-11`).send({ weightKg: 72, bodyFatPct: 90 }).expect(400);
+    await a.put(`${url}/2026-10-11`).send({ weightKg: 72, skeletalMuscleKg: 2 }).expect(400);
 
     await b.get(url).expect(404);
     await b.put(`${url}/2026-10-11`).send({ weightKg: 70 }).expect(404);

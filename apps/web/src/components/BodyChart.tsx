@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { BodyRecordDto } from '@/api/generated'
+import type { MetricPoint } from '@/lib/body'
 
 const HEIGHT = 200
 const PAD = { top: 20, right: 20, bottom: 26, left: 36 }
@@ -8,9 +8,9 @@ const DAY = 24 * 60 * 60 * 1000
 const toTime = (date: string) => Date.parse(`${date}T00:00:00Z`)
 const shortDate = (date: string) => `${Number(date.slice(5, 7))}.${Number(date.slice(8, 10))}`
 
-// 체중 추이 선 그래프 (단일 계열 · 2px 선 · 연한 보조선 · 가까운 날짜에 맞춘 세로선 + 값 표시)
+// 체성분 추이 선 그래프 (항목 하나씩 — 단위가 달라 한 그래프에 겹치지 않음) (단일 계열 · 2px 선 · 연한 보조선 · 가까운 날짜에 맞춘 세로선 + 값 표시)
 // 라이브러리 없이 SVG. 색은 글자색 토큰(currentColor)만 사용 → 다크 모드 자동
-export default function WeightChart({ records }: { records: BodyRecordDto[] }) {
+export default function BodyChart({ points: data, unit, label }: { points: MetricPoint[]; unit: string; label: string }) {
   const box = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -24,25 +24,25 @@ export default function WeightChart({ records }: { records: BodyRecordDto[] }) {
     return () => observer.disconnect()
   }, [])
 
-  if (records.length === 0) {
-    return <p className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">아직 체중 기록이 없어요</p>
+  if (data.length === 0) {
+    return <p className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">아직 {label} 기록이 없어요</p>
   }
 
-  const weights = records.map((r) => r.weightKg)
-  // 세로축: 최소·최대에 여유 1kg, 정수 눈금 3개
-  const yMin = Math.floor(Math.min(...weights) - 1)
-  const yMaxRaw = Math.ceil(Math.max(...weights) + 1)
+  const values = data.map((d) => d.value)
+  // 세로축: 최소·최대에 여유 1(단위), 정수 눈금 3개
+  const yMin = Math.floor(Math.min(...values) - 1)
+  const yMaxRaw = Math.ceil(Math.max(...values) + 1)
   const yMax = (yMaxRaw - yMin) % 2 ? yMaxRaw + 1 : yMaxRaw // 가운데 눈금도 정수가 되게 간격을 짝수로
   const yTicks = [yMin, (yMin + yMax) / 2, yMax]
   // 가로축: 실제 날짜 간격 (기록이 하루면 ±1일로 폭 확보)
-  const t0 = toTime(records[0].date)
-  const t1 = Math.max(toTime(records.at(-1)!.date), t0 + DAY)
+  const t0 = toTime(data[0].date)
+  const t1 = Math.max(toTime(data.at(-1)!.date), t0 + DAY)
 
   const plotW = Math.max(width - PAD.left - PAD.right, 1)
   const plotH = HEIGHT - PAD.top - PAD.bottom
   const x = (date: string) => PAD.left + ((toTime(date) - t0) / (t1 - t0)) * plotW
-  const y = (kg: number) => PAD.top + (1 - (kg - yMin) / (yMax - yMin)) * plotH
-  const points = records.map((r) => [x(r.date), y(r.weightKg)] as const)
+  const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * plotH
+  const points = data.map((d) => [x(d.date), y(d.value)] as const)
   const path = points.map(([px, py], i) => `${i ? 'L' : 'M'}${px},${py}`).join('')
 
   // 포인터에서 가장 가까운 날짜 (선이 아니라 날짜를 겨냥)
@@ -55,9 +55,9 @@ export default function WeightChart({ records }: { records: BodyRecordDto[] }) {
     setActive(best)
   }
 
-  const shown = active ?? records.length - 1
+  const shown = active ?? data.length - 1
   const [ax, ay] = points[shown]
-  const showDots = records.length <= 30
+  const showDots = data.length <= 30
   // 값 표시가 위로 넘치면 점 아래에
   const tipBelow = ay < 56
 
@@ -68,7 +68,7 @@ export default function WeightChart({ records }: { records: BodyRecordDto[] }) {
           width={width}
           height={HEIGHT}
           role="img"
-          aria-label={`체중 추이: ${shortDate(records[0].date)} ${records[0].weightKg}kg 부터 ${shortDate(records.at(-1)!.date)} ${records.at(-1)!.weightKg}kg 까지`}
+          aria-label={`${label} 추이: ${shortDate(data[0].date)} ${data[0].value}${unit} 부터 ${shortDate(data.at(-1)!.date)} ${data.at(-1)!.value}${unit} 까지`}
           className="touch-pan-y"
           onPointerMove={(e) => pick(e.clientX)}
           onPointerDown={(e) => pick(e.clientX)}
@@ -83,11 +83,11 @@ export default function WeightChart({ records }: { records: BodyRecordDto[] }) {
             </g>
           ))}
           <text x={PAD.left} y={HEIGHT - 6} className="fill-muted-foreground text-[11px]">
-            {shortDate(records[0].date)}
+            {shortDate(data[0].date)}
           </text>
-          {records.length > 1 && (
+          {data.length > 1 && (
             <text x={width - PAD.right} y={HEIGHT - 6} textAnchor="end" className="fill-muted-foreground text-[11px]">
-              {shortDate(records.at(-1)!.date)}
+              {shortDate(data.at(-1)!.date)}
             </text>
           )}
 
@@ -104,8 +104,11 @@ export default function WeightChart({ records }: { records: BodyRecordDto[] }) {
           className={`pointer-events-none absolute -translate-x-1/2 rounded-md border bg-popover px-2 py-1 text-center shadow-sm ${tipBelow ? '' : '-translate-y-full'}`}
           style={{ left: Math.min(Math.max(ax, 44), width - 44), top: tipBelow ? ay + 10 : ay - 10 }}
         >
-          <p className="text-sm leading-tight font-semibold">{records[shown].weightKg}kg</p>
-          <p className="text-[11px] leading-tight text-muted-foreground">{shortDate(records[shown].date)}</p>
+          <p className="text-sm leading-tight font-semibold">
+            {data[shown].value}
+            {unit}
+          </p>
+          <p className="text-[11px] leading-tight text-muted-foreground">{shortDate(data[shown].date)}</p>
         </div>
       )}
     </div>

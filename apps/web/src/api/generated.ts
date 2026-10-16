@@ -114,10 +114,24 @@ export interface MemberViewWorkoutDto {
 export interface BodyRecordDto {
   date: string;
   weightKg: number;
+  /** @nullable */
+  bodyFatPct: number | null;
+  /** @nullable */
+  skeletalMuscleKg: number | null;
 }
 
 export interface SaveBodyRecordDto {
   weightKg: number;
+  /**
+     * 체지방률(%) — 선택
+     * @nullable
+     */
+  bodyFatPct?: number | null;
+  /**
+     * 골격근량(kg) — 선택
+     * @nullable
+     */
+  skeletalMuscleKg?: number | null;
 }
 
 export type WorkoutsListByDateParams = {
