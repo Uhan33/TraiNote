@@ -1,0 +1,6 @@
+packages:
+  - apps/*
+
+allowBuilds:
+  esbuild: true
+  '@scarf/scarf': false # swagger-ui 사용 통계 전송
