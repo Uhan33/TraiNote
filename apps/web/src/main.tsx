@@ -11,6 +11,7 @@ import RequireAuth, { GuestOnly } from '@/features/auth/RequireAuth'
 import SignupPage from '@/features/auth/SignupPage'
 import MemberBodyPage from '@/features/member-view/MemberBodyPage'
 import MemberEntryPage from '@/features/member-view/MemberEntryPage'
+import MemberHomeworkPage from '@/features/member-view/MemberHomeworkPage'
 import MemberLayout from '@/features/member-view/MemberLayout'
 import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
 import MemberWorkoutsPage from '@/features/member-view/MemberWorkoutsPage'
@@ -33,7 +34,7 @@ createRoot(document.getElementById('root')!).render(
               <Route index element={<MemberEntryPage />} />
               <Route element={<MemberLayout />}>
                 <Route path="workouts" element={<MemberWorkoutsPage />} />
-                <Route path="homework" element={<ComingSoon />} />
+                <Route path="homework" element={<MemberHomeworkPage />} />
                 <Route path="meals" element={<ComingSoon />} />
                 <Route path="body" element={<MemberBodyPage />} />
                 <Route path="settings" element={<MemberSettingsPage />} />
