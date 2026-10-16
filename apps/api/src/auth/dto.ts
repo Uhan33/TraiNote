@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, Length, Matches, MaxLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 
 const lower = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
 
@@ -10,11 +10,13 @@ export class SignupDto {
   @Matches(/^[a-z0-9_]{4,20}$/, { message: '아이디는 영문·숫자·_ 4~20자로 입력하세요' })
   loginId: string;
 
-  @ApiProperty({ example: 'trainer@example.com' })
-  @Transform(lower)
+  @ApiPropertyOptional({ example: 'trainer@example.com', description: '선택 — 비밀번호 찾기용' })
+  // 빈 문자열은 미입력으로 처리
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() || undefined : value))
+  @IsOptional()
   @IsEmail({}, { message: '이메일 형식이 올바르지 않습니다' })
   @MaxLength(255)
-  email: string;
+  email?: string;
 
   @ApiProperty({ example: 'password1234', description: '8~72자' })
   @IsString()
@@ -44,6 +46,6 @@ export class LoginDto {
 export class TrainerDto {
   @ApiProperty() id: string;
   @ApiProperty() loginId: string;
-  @ApiProperty() email: string;
+  @ApiProperty({ type: String, nullable: true }) email: string | null;
   @ApiProperty() name: string;
 }

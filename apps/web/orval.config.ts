@@ -7,7 +7,12 @@ export default defineConfig({
     output: {
       target: 'src/api/generated.ts',
       client: 'react-query',
-      baseUrl: { runtime: 'import.meta.env.VITE_API_URL' },
+      httpClient: 'fetch',
+      override: {
+        mutator: { path: 'src/api/fetcher.ts', name: 'customFetch' },
+        // 성공 응답 본문만 반환 (에러는 customFetch 가 ApiError 로 throw)
+        fetch: { includeHttpResponseReturnType: false },
+      },
     },
   },
 })

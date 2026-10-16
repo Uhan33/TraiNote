@@ -1,5 +1,7 @@
-import { ClipboardCheck, Dumbbell, Scale, Utensils } from 'lucide-react'
-import { NavLink, Outlet, useMatch } from 'react-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { ClipboardCheck, Dumbbell, LogOut, Scale, Utensils } from 'lucide-react'
+import { NavLink, Outlet, useMatch, useNavigate } from 'react-router'
+import { authControllerLogout, useAuthControllerMe } from '@/api/generated'
 import ThemeToggle from './ThemeToggle'
 
 const TABS = [
@@ -13,6 +15,15 @@ const TABS = [
 export default function AppLayout() {
   // 모바일 상세 화면은 전체 화면으로 — 하단 탭 숨김
   const inDetail = !!useMatch('/workouts/:memberId')
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const me = useAuthControllerMe({ query: { staleTime: Infinity } })
+
+  const logout = async () => {
+    await authControllerLogout().catch(() => {}) // 실패해도 화면은 로그아웃 처리
+    queryClient.clear()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className={`flex min-h-dvh lg:h-dvh ${inDetail ? '' : 'pb-[calc(4rem+env(safe-area-inset-bottom))]'} lg:pb-0`}>
@@ -36,7 +47,17 @@ export default function AppLayout() {
             </li>
           ))}
         </ul>
-        <p className="mt-auto px-3 text-xs text-muted-foreground">v{__APP_VERSION__}</p>
+        <div className="mt-auto flex flex-col gap-1">
+          <p className="truncate px-3 text-sm font-medium">{me.data?.name}</p>
+          <button
+            type="button"
+            onClick={logout}
+            className="flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted/60"
+          >
+            <LogOut className="size-4" /> 로그아웃
+          </button>
+          <p className="px-3 pt-2 text-xs text-muted-foreground">v{__APP_VERSION__}</p>
+        </div>
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col lg:overflow-hidden">

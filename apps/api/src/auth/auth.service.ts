@@ -15,12 +15,14 @@ export class AuthService {
   constructor(@InjectRepository(Trainer) private readonly trainers: Repository<Trainer>) {}
 
   async signup(dto: SignupDto) {
-    const existing = await this.trainers.findOne({ where: [{ loginId: dto.loginId }, { email: dto.email }] });
+    const existing = await this.trainers.findOne({
+      where: dto.email ? [{ loginId: dto.loginId }, { email: dto.email }] : { loginId: dto.loginId },
+    });
     if (existing) throw this.duplicate(existing.loginId === dto.loginId ? 'loginId' : 'email');
 
     try {
       const trainer = await this.trainers.save(
-        this.trainers.create({ loginId: dto.loginId, email: dto.email, name: dto.name, passwordHash: await hashPassword(dto.password) }),
+        this.trainers.create({ loginId: dto.loginId, email: dto.email ?? null, name: dto.name, passwordHash: await hashPassword(dto.password) }),
       );
       return toDto(trainer);
     } catch (e) {

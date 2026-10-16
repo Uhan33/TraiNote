@@ -16,11 +16,10 @@ apps/
 ```bash
 pnpm install
 cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
 docker compose up -d                  # 로컬 Postgres 18 (:5432)
 pnpm --filter api migration:run       # 테이블 생성
 pnpm dev                       # api :4000, web :5173 동시 실행
-pnpm --filter web gen:api      # api 실행 중일 때 API 클라이언트 생성 → apps/web/src/api
+pnpm --filter web gen:api      # api 실행 중일 때 API 클라이언트 생성 → apps/web/src/api/generated.ts
 ```
 
 ## DB 마이그레이션 (TypeORM)
