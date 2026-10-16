@@ -34,7 +34,7 @@ export default function WorkoutEditPage() {
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="flex h-14 max-w-2xl items-center gap-1 px-2 lg:px-6">
-          <Button variant="ghost" size="icon-lg" aria-label="회원 목록" className="lg:hidden" onClick={() => navigate(`/workouts?date=${date}`)}>
+          <Button variant="ghost" size="icon-lg" aria-label="회원 목록" className="md:hidden" onClick={() => navigate(`/workouts?date=${date}`)}>
             <ChevronLeft className="size-6" />
           </Button>
           <span className="text-lg font-semibold">{member?.name ?? (members.isPending ? '' : '회원 없음')}</span>

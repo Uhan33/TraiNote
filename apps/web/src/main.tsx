@@ -17,7 +17,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="mx-auto min-h-dvh max-w-md lg:max-w-none">
+        <div className="mx-auto min-h-dvh max-w-md md:max-w-none">
           <Routes>
             {/* / 는 추후 랜딩페이지 */}
             <Route index element={<Navigate to="/workouts" replace />} />

@@ -12,15 +12,17 @@ const TABS = [
   { to: '/settings', label: '내 정보', icon: UserRound },
 ]
 
-// 모바일(< lg): 하단 탭 바 / PC(lg 이상): 좌측 사이드바
+// 모바일(< md): 하단 탭, 목록↔상세 전환 / 태블릿 세로(md): 하단 탭 + 목록·일지 2단 / PC·태블릿 가로(lg 이상): 사이드바 + 2단
 export default function AppLayout() {
-  // 모바일 상세 화면은 전체 화면으로 — 하단 탭 숨김
+  // 모바일 상세 화면은 전체 화면으로 — 하단 탭 숨김 (태블릿부터는 목록과 함께 보이므로 유지)
   const inDetail = !!useMatch('/workouts/:memberId')
   const me = useAuthMe({ query: { staleTime: Infinity } })
   const logout = useLogout()
 
   return (
-    <div className={`flex min-h-dvh lg:h-dvh ${inDetail ? '' : 'pb-[calc(4rem+env(safe-area-inset-bottom))]'} lg:pb-0`}>
+    <div
+      className={`flex min-h-dvh md:h-dvh ${inDetail ? 'md:pb-[calc(4rem+env(safe-area-inset-bottom))]' : 'pb-[calc(4rem+env(safe-area-inset-bottom))]'} lg:pb-0`}
+    >
       <aside className="hidden w-56 shrink-0 flex-col border-r px-3 py-6 lg:flex">
         <div className="flex items-center justify-between pb-6 pl-3 pr-1">
           <p className="text-xl font-bold">TraiNote</p>
@@ -54,12 +56,12 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col lg:overflow-hidden">
+      <main className="flex min-w-0 flex-1 flex-col md:overflow-hidden">
         <Outlet />
       </main>
 
       <nav
-        className={`fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden ${inDetail ? 'hidden' : ''}`}
+        className={`fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden ${inDetail ? 'hidden md:block' : ''}`}
       >
         <ul className="mx-auto grid h-16 max-w-md grid-cols-5">
           {TABS.map(({ to, label, icon: Icon }) => (

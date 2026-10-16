@@ -54,7 +54,7 @@ export default function WorkoutListPage() {
             <li key={member.code}>
               <NavLink
                 to={`/workouts/${member.code}?date=${date}`}
-                className={({ isActive }) => `flex items-center gap-3 rounded-xl px-2 py-3 active:bg-muted lg:hover:bg-muted/60 ${isActive ? 'lg:bg-muted' : ''}`}
+                className={({ isActive }) => `flex items-center gap-3 rounded-xl px-2 py-3 active:bg-muted md:hover:bg-muted/60 ${isActive ? 'md:bg-muted' : ''}`}
               >
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted font-semibold">{member.name[0]}</span>
                 <span className="min-w-0 flex-1">
