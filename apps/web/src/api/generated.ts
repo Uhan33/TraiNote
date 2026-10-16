@@ -111,6 +111,15 @@ export interface MemberViewWorkoutDto {
   date: string;
 }
 
+export interface BodyRecordDto {
+  date: string;
+  weightKg: number;
+}
+
+export interface SaveBodyRecordDto {
+  weightKg: number;
+}
+
 export type WorkoutsListByDateParams = {
 date: string;
 };
@@ -2043,3 +2052,354 @@ export function useMemberViewWorkouts<TData = Awaited<ReturnType<typeof memberVi
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+
+
+export const getMemberViewBodyRecordsUrl = () => {
+
+
+
+
+  return `/api/v1/member/me/body-records`
+}
+
+export const memberViewBodyRecords = async ( options?: Parameters<typeof customFetch>[1]): Promise<BodyRecordDto[]> => {
+
+  return customFetch<BodyRecordDto[]>(getMemberViewBodyRecordsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getMemberViewBodyRecordsQueryKey = () => {
+    return [
+    `/api/v1/member/me/body-records`
+    ] as const;
+    }
+
+
+export const getMemberViewBodyRecordsQueryOptions = <TData = Awaited<ReturnType<typeof memberViewBodyRecords>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewBodyRecords>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMemberViewBodyRecordsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof memberViewBodyRecords>>> = ({ signal }) => memberViewBodyRecords({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof memberViewBodyRecords>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MemberViewBodyRecordsQueryResult = NonNullable<Awaited<ReturnType<typeof memberViewBodyRecords>>>
+export type MemberViewBodyRecordsQueryError = void
+
+
+export function useMemberViewBodyRecords<TData = Awaited<ReturnType<typeof memberViewBodyRecords>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewBodyRecords>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberViewBodyRecords>>,
+          TError,
+          Awaited<ReturnType<typeof memberViewBodyRecords>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMemberViewBodyRecords<TData = Awaited<ReturnType<typeof memberViewBodyRecords>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewBodyRecords>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberViewBodyRecords>>,
+          TError,
+          Awaited<ReturnType<typeof memberViewBodyRecords>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMemberViewBodyRecords<TData = Awaited<ReturnType<typeof memberViewBodyRecords>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewBodyRecords>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useMemberViewBodyRecords<TData = Awaited<ReturnType<typeof memberViewBodyRecords>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewBodyRecords>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMemberViewBodyRecordsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getBodyListUrl = (code: string,) => {
+
+
+
+
+  return `/api/v1/members/${code}/body-records`
+}
+
+export const bodyList = async (code: string, options?: Parameters<typeof customFetch>[1]): Promise<BodyRecordDto[]> => {
+
+  return customFetch<BodyRecordDto[]>(getBodyListUrl(code),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getBodyListQueryKey = (code: string,) => {
+    return [
+    `/api/v1/members/${code}/body-records`
+    ] as const;
+    }
+
+
+export const getBodyListQueryOptions = <TData = Awaited<ReturnType<typeof bodyList>>, TError = void>(code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bodyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBodyListQueryKey(code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof bodyList>>> = ({ signal }) => bodyList(code, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: code !== null && code !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof bodyList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type BodyListQueryResult = NonNullable<Awaited<ReturnType<typeof bodyList>>>
+export type BodyListQueryError = void
+
+
+export function useBodyList<TData = Awaited<ReturnType<typeof bodyList>>, TError = void>(
+ code: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof bodyList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof bodyList>>,
+          TError,
+          Awaited<ReturnType<typeof bodyList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBodyList<TData = Awaited<ReturnType<typeof bodyList>>, TError = void>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bodyList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof bodyList>>,
+          TError,
+          Awaited<ReturnType<typeof bodyList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBodyList<TData = Awaited<ReturnType<typeof bodyList>>, TError = void>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bodyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useBodyList<TData = Awaited<ReturnType<typeof bodyList>>, TError = void>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bodyList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getBodyListQueryOptions(code,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getBodySaveUrl = (code: string,
+    date: string,) => {
+
+
+
+
+  return `/api/v1/members/${code}/body-records/${date}`
+}
+
+export const bodySave = async (code: string,
+    date: string,
+    saveBodyRecordDto: SaveBodyRecordDto, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getBodySaveUrl(code,date),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(saveBodyRecordDto)
+  }
+);}
+
+
+
+
+
+export const getBodySaveMutationKey = () => ['bodySave'] as const;
+
+export const getBodySaveMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bodySave>>, TError,BodySaveMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bodySave>>, TError,BodySaveMutationVariables, TContext> => {
+
+const mutationKey = getBodySaveMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bodySave>>, BodySaveMutationVariables> = (props) => {
+          const {code,date,data} = props ?? {};
+
+          return  bodySave(code,date,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BodySaveMutationResult = NonNullable<Awaited<ReturnType<typeof bodySave>>>
+    export type BodySaveMutationBody = SaveBodyRecordDto
+    export type BodySaveMutationError = void
+    export type BodySaveMutationVariables = {code: string;date: string;data: SaveBodyRecordDto}
+
+    export const useBodySave = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bodySave>>, TError,BodySaveMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bodySave>>,
+        TError,
+        BodySaveMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBodySaveMutationOptions(options), queryClient);
+    }
+
+export const getBodyRemoveUrl = (code: string,
+    date: string,) => {
+
+
+
+
+  return `/api/v1/members/${code}/body-records/${date}`
+}
+
+export const bodyRemove = async (code: string,
+    date: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getBodyRemoveUrl(code,date),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getBodyRemoveMutationKey = () => ['bodyRemove'] as const;
+
+export const getBodyRemoveMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bodyRemove>>, TError,BodyRemoveMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bodyRemove>>, TError,BodyRemoveMutationVariables, TContext> => {
+
+const mutationKey = getBodyRemoveMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bodyRemove>>, BodyRemoveMutationVariables> = (props) => {
+          const {code,date} = props ?? {};
+
+          return  bodyRemove(code,date,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BodyRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof bodyRemove>>>
+
+    export type BodyRemoveMutationError = void
+    export type BodyRemoveMutationVariables = {code: string;date: string}
+
+    export const useBodyRemove = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bodyRemove>>, TError,BodyRemoveMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bodyRemove>>,
+        TError,
+        BodyRemoveMutationVariables,
+        TContext
+      > => {
+      return useMutation(getBodyRemoveMutationOptions(options), queryClient);
+    }

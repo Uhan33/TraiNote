@@ -8,7 +8,9 @@ const TABS = appTabs('')
 
 // 트레이너 화면 레이아웃
 export default function AppLayout() {
-  const inDetail = !!useMatch('/workouts/:memberId')
+  const workoutDetail = useMatch('/workouts/:memberId')
+  const bodyDetail = useMatch('/body/:memberId')
+  const inDetail = !!(workoutDetail || bodyDetail)
   const me = useAuthMe({ query: { staleTime: Infinity } })
   const logout = useLogout()
   return <AppShell tabs={TABS} userName={me.data?.name} logoutLabel="로그아웃" onLogout={logout} inDetail={inDetail} />

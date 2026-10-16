@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, HttpCode, Post, Query, Res, UseGuards } 
 import { ApiNoContentResponse, ApiOkResponse, ApiQuery, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Response } from 'express';
+import { BodyService } from '../body/body.service.js';
+import { BodyRecordDto } from '../body/dto.js';
 import type { Member } from '../members/member.entity.js';
 import { MemberSessionDto, MemberViewDto, MemberViewWorkoutDto } from './dto.js';
 import { CurrentMember, MEMBER_COOKIE, MemberAuthGuard } from './member-auth.guard.js';
@@ -20,7 +22,10 @@ const memberCookie = (): CookieOptions => ({
 @ApiTags('member')
 @Controller('member')
 export class MemberViewController {
-  constructor(private readonly view: MemberViewService) {}
+  constructor(
+    private readonly view: MemberViewService,
+    private readonly body: BodyService,
+  ) {}
 
   @Post('session')
   @HttpCode(204)
@@ -56,5 +61,13 @@ export class MemberViewController {
   @ApiUnauthorizedResponse()
   workouts(@CurrentMember() member: Member, @Query('before') before?: string) {
     return this.view.workouts(member, before);
+  }
+
+  @Get('me/body-records')
+  @UseGuards(MemberAuthGuard)
+  @ApiOkResponse({ type: [BodyRecordDto], description: '날짜 오름차순' })
+  @ApiUnauthorizedResponse()
+  bodyRecords(@CurrentMember() member: Member) {
+    return this.body.listByMemberId(member.id);
   }
 }

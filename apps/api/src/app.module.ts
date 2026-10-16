@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
+import { BodyModule } from './body/body.module.js';
 import { dataSourceOptions } from './database/data-source.js';
 import { MemberViewModule } from './member-view/member-view.module.js';
 import { MembersModule } from './members/members.module.js';
@@ -21,6 +22,7 @@ import { WorkoutsModule } from './workouts/workouts.module.js';
     MembersModule,
     WorkoutsModule,
     MemberViewModule,
+    BodyModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

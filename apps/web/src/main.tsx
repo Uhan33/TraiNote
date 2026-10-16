@@ -4,9 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import './index.css'
 import AppLayout, { ComingSoon } from '@/components/AppLayout'
+import BodyDetailPage from '@/features/body/BodyDetailPage'
+import BodyPage from '@/features/body/BodyPage'
 import LoginPage from '@/features/auth/LoginPage'
 import RequireAuth, { GuestOnly } from '@/features/auth/RequireAuth'
 import SignupPage from '@/features/auth/SignupPage'
+import MemberBodyPage from '@/features/member-view/MemberBodyPage'
 import MemberEntryPage from '@/features/member-view/MemberEntryPage'
 import MemberLayout from '@/features/member-view/MemberLayout'
 import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
@@ -32,7 +35,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="workouts" element={<MemberWorkoutsPage />} />
                 <Route path="homework" element={<ComingSoon />} />
                 <Route path="meals" element={<ComingSoon />} />
-                <Route path="body" element={<ComingSoon />} />
+                <Route path="body" element={<MemberBodyPage />} />
                 <Route path="settings" element={<MemberSettingsPage />} />
               </Route>
             </Route>
@@ -48,7 +51,10 @@ createRoot(document.getElementById('root')!).render(
                 </Route>
                 <Route path="homework" element={<ComingSoon />} />
                 <Route path="meals" element={<ComingSoon />} />
-                <Route path="body" element={<ComingSoon />} />
+                <Route path="body" element={<BodyPage />}>
+                  <Route index element={<NoMemberSelected />} />
+                  <Route path=":memberId" element={<BodyDetailPage />} />
+                </Route>
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Route>
