@@ -1,0 +1,16 @@
+# 로컬 개발용 DB. 실행: docker compose up -d
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: trainote
+      POSTGRES_PASSWORD: trainote
+      POSTGRES_DB: trainote
+    ports:
+      - '5432:5432'
+    volumes:
+      # Postgres 18 부터 데이터 경로가 /var/lib/postgresql/<버전>/... 로 바뀌어 상위 폴더를 마운트
+      - pgdata:/var/lib/postgresql
+
+volumes:
+  pgdata:
