@@ -7,6 +7,10 @@ import AppLayout, { ComingSoon } from '@/components/AppLayout'
 import LoginPage from '@/features/auth/LoginPage'
 import RequireAuth, { GuestOnly } from '@/features/auth/RequireAuth'
 import SignupPage from '@/features/auth/SignupPage'
+import MemberEntryPage from '@/features/member-view/MemberEntryPage'
+import MemberLayout from '@/features/member-view/MemberLayout'
+import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
+import MemberWorkoutsPage from '@/features/member-view/MemberWorkoutsPage'
 import SettingsPage from '@/features/settings/SettingsPage'
 import WorkoutEditPage from '@/features/workouts/WorkoutEditPage'
 import WorkoutsPage, { NoMemberSelected } from '@/features/workouts/WorkoutsPage'
@@ -21,6 +25,17 @@ createRoot(document.getElementById('root')!).render(
           <Routes>
             {/* / 는 추후 랜딩페이지 */}
             <Route index element={<Navigate to="/workouts" replace />} />
+            {/* 회원용 화면 — 트레이너 로그인과 무관, 회원 코드 입력 → 회원 토큰 */}
+            <Route path="member">
+              <Route index element={<MemberEntryPage />} />
+              <Route element={<MemberLayout />}>
+                <Route path="workouts" element={<MemberWorkoutsPage />} />
+                <Route path="homework" element={<ComingSoon />} />
+                <Route path="meals" element={<ComingSoon />} />
+                <Route path="body" element={<ComingSoon />} />
+                <Route path="settings" element={<MemberSettingsPage />} />
+              </Route>
+            </Route>
             <Route element={<GuestOnly />}>
               <Route path="login" element={<LoginPage />} />
               <Route path="signup" element={<SignupPage />} />

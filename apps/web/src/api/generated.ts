@@ -92,12 +92,45 @@ export interface SaveWorkoutDto {
   exercises: ExerciseDto[];
 }
 
+export interface MemberSessionDto {
+  code: string;
+}
+
+export interface MemberViewDto {
+  name: string;
+  trainerName: string;
+  /** month(YYYY-MM) 의 운동 횟수 */
+  monthCount: number;
+  totalCount: number;
+}
+
+export interface MemberViewWorkoutDto {
+  title: string;
+  memo: string;
+  exercises: ExerciseDto[];
+  date: string;
+}
+
 export type WorkoutsListByDateParams = {
 date: string;
 };
 
 export type WorkoutsPreviousParams = {
 before: string;
+};
+
+export type MemberViewMeParams = {
+/**
+ * 이번 달(회원 기기 기준) — 월 운동 횟수 계산
+ */
+month: string;
+};
+
+export type MemberViewWorkoutsParams = {
+/**
+ * 이 날짜 이전 기록 (무한 스크롤)
+ */
+before?: string;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -1005,6 +1038,74 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getMembersRemoveMutationOptions(options), queryClient);
     }
 
+export const getMembersReissueUrl = (code: string,) => {
+
+
+
+
+  return `/api/v1/members/${code}/reissue`
+}
+
+export const membersReissue = async (code: string, options?: Parameters<typeof customFetch>[1]): Promise<MemberDto> => {
+
+  return customFetch<MemberDto>(getMembersReissueUrl(code),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getMembersReissueMutationKey = () => ['membersReissue'] as const;
+
+export const getMembersReissueMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersReissue>>, TError,MembersReissueMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof membersReissue>>, TError,MembersReissueMutationVariables, TContext> => {
+
+const mutationKey = getMembersReissueMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof membersReissue>>, MembersReissueMutationVariables> = (props) => {
+          const {code} = props ?? {};
+
+          return  membersReissue(code,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MembersReissueMutationResult = NonNullable<Awaited<ReturnType<typeof membersReissue>>>
+
+    export type MembersReissueMutationError = void
+    export type MembersReissueMutationVariables = {code: string}
+
+    export const useMembersReissue = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersReissue>>, TError,MembersReissueMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof membersReissue>>,
+        TError,
+        MembersReissueMutationVariables,
+        TContext
+      > => {
+      return useMutation(getMembersReissueMutationOptions(options), queryClient);
+    }
+
 export const getWorkoutsListByDateUrl = (params: WorkoutsListByDateParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1594,3 +1695,351 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getWorkoutsSaveMutationOptions(options), queryClient);
     }
+
+export const getMemberViewCreateSessionUrl = () => {
+
+
+
+
+  return `/api/v1/member/session`
+}
+
+export const memberViewCreateSession = async (memberSessionDto: MemberSessionDto, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getMemberViewCreateSessionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(memberSessionDto)
+  }
+);}
+
+
+
+
+
+export const getMemberViewCreateSessionMutationKey = () => ['memberViewCreateSession'] as const;
+
+export const getMemberViewCreateSessionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof memberViewCreateSession>>, TError,MemberViewCreateSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof memberViewCreateSession>>, TError,MemberViewCreateSessionMutationVariables, TContext> => {
+
+const mutationKey = getMemberViewCreateSessionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof memberViewCreateSession>>, MemberViewCreateSessionMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  memberViewCreateSession(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MemberViewCreateSessionMutationResult = NonNullable<Awaited<ReturnType<typeof memberViewCreateSession>>>
+    export type MemberViewCreateSessionMutationBody = MemberSessionDto
+    export type MemberViewCreateSessionMutationError = void
+    export type MemberViewCreateSessionMutationVariables = {data: MemberSessionDto}
+
+    export const useMemberViewCreateSession = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof memberViewCreateSession>>, TError,MemberViewCreateSessionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof memberViewCreateSession>>,
+        TError,
+        MemberViewCreateSessionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getMemberViewCreateSessionMutationOptions(options), queryClient);
+    }
+
+export const getMemberViewDeleteSessionUrl = () => {
+
+
+
+
+  return `/api/v1/member/session`
+}
+
+export const memberViewDeleteSession = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getMemberViewDeleteSessionUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getMemberViewDeleteSessionMutationKey = () => ['memberViewDeleteSession'] as const;
+
+export const getMemberViewDeleteSessionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof memberViewDeleteSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof memberViewDeleteSession>>, TError,void, TContext> => {
+
+const mutationKey = getMemberViewDeleteSessionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof memberViewDeleteSession>>, void> = () => {
+
+
+          return  memberViewDeleteSession(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MemberViewDeleteSessionMutationResult = NonNullable<Awaited<ReturnType<typeof memberViewDeleteSession>>>
+
+    export type MemberViewDeleteSessionMutationError = unknown
+
+
+    export const useMemberViewDeleteSession = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof memberViewDeleteSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof memberViewDeleteSession>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getMemberViewDeleteSessionMutationOptions(options), queryClient);
+    }
+
+export const getMemberViewMeUrl = (params: MemberViewMeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/member/me?${stringifiedParams}` : `/api/v1/member/me`
+}
+
+export const memberViewMe = async (params: MemberViewMeParams, options?: Parameters<typeof customFetch>[1]): Promise<MemberViewDto> => {
+
+  return customFetch<MemberViewDto>(getMemberViewMeUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getMemberViewMeQueryKey = (params?: MemberViewMeParams,) => {
+    return [
+    `/api/v1/member/me`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getMemberViewMeQueryOptions = <TData = Awaited<ReturnType<typeof memberViewMe>>, TError = void>(params: MemberViewMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewMe>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMemberViewMeQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof memberViewMe>>> = ({ signal }) => memberViewMe(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof memberViewMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MemberViewMeQueryResult = NonNullable<Awaited<ReturnType<typeof memberViewMe>>>
+export type MemberViewMeQueryError = void
+
+
+export function useMemberViewMe<TData = Awaited<ReturnType<typeof memberViewMe>>, TError = void>(
+ params: MemberViewMeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewMe>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberViewMe>>,
+          TError,
+          Awaited<ReturnType<typeof memberViewMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMemberViewMe<TData = Awaited<ReturnType<typeof memberViewMe>>, TError = void>(
+ params: MemberViewMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewMe>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberViewMe>>,
+          TError,
+          Awaited<ReturnType<typeof memberViewMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMemberViewMe<TData = Awaited<ReturnType<typeof memberViewMe>>, TError = void>(
+ params: MemberViewMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewMe>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useMemberViewMe<TData = Awaited<ReturnType<typeof memberViewMe>>, TError = void>(
+ params: MemberViewMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewMe>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMemberViewMeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getMemberViewWorkoutsUrl = (params?: MemberViewWorkoutsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/member/me/workouts?${stringifiedParams}` : `/api/v1/member/me/workouts`
+}
+
+export const memberViewWorkouts = async (params?: MemberViewWorkoutsParams, options?: Parameters<typeof customFetch>[1]): Promise<MemberViewWorkoutDto[]> => {
+
+  return customFetch<MemberViewWorkoutDto[]>(getMemberViewWorkoutsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getMemberViewWorkoutsQueryKey = (params?: MemberViewWorkoutsParams,) => {
+    return [
+    `/api/v1/member/me/workouts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getMemberViewWorkoutsQueryOptions = <TData = Awaited<ReturnType<typeof memberViewWorkouts>>, TError = void>(params?: MemberViewWorkoutsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewWorkouts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMemberViewWorkoutsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof memberViewWorkouts>>> = ({ signal }) => memberViewWorkouts(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof memberViewWorkouts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MemberViewWorkoutsQueryResult = NonNullable<Awaited<ReturnType<typeof memberViewWorkouts>>>
+export type MemberViewWorkoutsQueryError = void
+
+
+export function useMemberViewWorkouts<TData = Awaited<ReturnType<typeof memberViewWorkouts>>, TError = void>(
+ params: undefined |  MemberViewWorkoutsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewWorkouts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberViewWorkouts>>,
+          TError,
+          Awaited<ReturnType<typeof memberViewWorkouts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMemberViewWorkouts<TData = Awaited<ReturnType<typeof memberViewWorkouts>>, TError = void>(
+ params?: MemberViewWorkoutsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewWorkouts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberViewWorkouts>>,
+          TError,
+          Awaited<ReturnType<typeof memberViewWorkouts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMemberViewWorkouts<TData = Awaited<ReturnType<typeof memberViewWorkouts>>, TError = void>(
+ params?: MemberViewWorkoutsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewWorkouts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useMemberViewWorkouts<TData = Awaited<ReturnType<typeof memberViewWorkouts>>, TError = void>(
+ params?: MemberViewWorkoutsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof memberViewWorkouts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMemberViewWorkoutsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

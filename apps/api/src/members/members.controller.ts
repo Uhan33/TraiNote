@@ -29,6 +29,13 @@ export class MembersController {
     return this.members.update(trainerId, code, dto);
   }
 
+  @Post(':code/reissue')
+  @ApiCreatedResponse({ type: MemberDto, description: '새 코드 발급 — 기존 코드로 접속한 회원 기기는 로그아웃' })
+  @ApiNotFoundResponse()
+  reissue(@CurrentTrainerId() trainerId: string, @Param('code') code: string) {
+    return this.members.reissueCode(trainerId, code);
+  }
+
   // 연결 해제(소프트 삭제)
   @Delete(':code')
   @HttpCode(204)

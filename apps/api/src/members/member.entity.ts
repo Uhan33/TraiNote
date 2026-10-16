@@ -12,6 +12,10 @@ export class Member {
   @Column({ type: 'char', length: 6, unique: true })
   code: string;
 
+  // 코드 발급 시각 — 회원 토큰에 같이 담아, 재발급하면 기존 토큰 무효
+  @Column({ name: 'code_issued_at', type: 'timestamptz', default: () => 'now()' })
+  codeIssuedAt: Date;
+
   @Index()
   @Column({ name: 'trainer_id', type: 'uuid' })
   trainerId: string;

@@ -7,6 +7,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { dataSourceOptions } from './database/data-source.js';
+import { MemberViewModule } from './member-view/member-view.module.js';
 import { MembersModule } from './members/members.module.js';
 import { WorkoutsModule } from './workouts/workouts.module.js';
 
@@ -19,6 +20,7 @@ import { WorkoutsModule } from './workouts/workouts.module.js';
     AuthModule,
     MembersModule,
     WorkoutsModule,
+    MemberViewModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

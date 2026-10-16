@@ -16,12 +16,24 @@ export class MembersService {
     return rows.map(toDto);
   }
 
-  async create(trainerId: string, { name, memo = '' }: CreateMemberDto) {
-    // 코드 충돌 시 재생성 (21억 조합이라 사실상 1회)
+  create(trainerId: string, { name, memo = '' }: CreateMemberDto) {
+    return this.withNewCode(async (code) => toDto(await this.members.save(this.members.create({ trainerId, name, memo, code }))));
+  }
+
+  // 코드 재발급: 기존 코드·이미 발급된 회원 토큰 모두 무효 (기록은 내부 id 로 연결돼 유지)
+  async reissueCode(trainerId: string, code: string) {
+    const member = await this.findOwned(trainerId, code);
+    return this.withNewCode(async (newCode) => {
+      Object.assign(member, { code: newCode, codeIssuedAt: new Date() });
+      return toDto(await this.members.save(member));
+    });
+  }
+
+  // 코드 충돌(unique 위반) 시 새 코드로 재시도 (21억 조합이라 사실상 1회)
+  private async withNewCode<T>(run: (code: string) => Promise<T>): Promise<T> {
     for (let attempt = 0; ; attempt++) {
       try {
-        const member = await this.members.save(this.members.create({ trainerId, name, memo, code: generateMemberCode() }));
-        return toDto(member);
+        return await run(generateMemberCode());
       } catch (e) {
         const unique = e instanceof QueryFailedError && (e.driverError as { code?: string }).code === '23505';
         if (!unique || attempt >= 4) throw e;

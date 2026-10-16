@@ -17,7 +17,9 @@ export class AuthGuard implements CanActivate {
     const token = req.cookies?.[ACCESS_COOKIE] as string | undefined;
     if (!token) throw new UnauthorizedException('로그인이 필요합니다');
     try {
-      const payload = await this.jwt.verifyAsync<{ sub: string }>(token);
+      const payload = await this.jwt.verifyAsync<{ sub: string; typ?: string }>(token);
+      // 회원 토큰(typ: member)으로 트레이너 API 접근 차단
+      if (payload.typ) throw new Error('not a trainer token');
       req.trainerId = payload.sub;
       return true;
     } catch {

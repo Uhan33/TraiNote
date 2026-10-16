@@ -30,8 +30,8 @@ const refresh = () =>
     .catch(() => false)
     .finally(() => (refreshing = null)))
 
-// 토큰 발급·갱신 요청 자체는 재시도 대상 아님
-const NO_RETRY = ['/api/auth/login', '/api/auth/signup', '/api/auth/refresh', '/api/auth/logout']
+// 토큰 발급·갱신 요청 자체, 회원 API(회원 토큰은 갱신 없음)는 재시도 대상 아님
+const NO_RETRY = ['/api/auth/login', '/api/auth/signup', '/api/auth/refresh', '/api/auth/logout', '/api/v1/member/']
 
 export async function customFetch<T>(url: string, options: RequestInit): Promise<T> {
   const send = () => fetch(url, { ...options, credentials: 'include' })

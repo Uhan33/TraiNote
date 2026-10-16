@@ -1,15 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Ellipsis, Pencil, Trash2 } from 'lucide-react'
+import { Check, Ellipsis, Pencil, RefreshCw, Send, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { useMembersRemove, useMembersUpdate, type MemberDto } from '@/api/generated'
+import { useMembersReissue, useMembersRemove, useMembersUpdate, type MemberDto } from '@/api/generated'
 import { MemberFields } from './AddMemberButton'
 
-type Mode = 'menu' | 'edit' | 'delete'
+type Mode = 'menu' | 'edit' | 'reissue' | 'delete'
 
-// 회원 정보(이름·메모) 수정 · 삭제(연결 해제). 삭제는 확인 단계를 한 번 더 거침
+// 회원 초대 문구 복사 · 정보(이름·메모) 수정 · 코드 재발급 · 삭제(연결 해제). 재발급·삭제는 확인 단계를 한 번 더 거침
 export default function MemberMenu({ member, date }: { member: MemberDto; date: string }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -17,8 +17,10 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
   const [mode, setMode] = useState<Mode>('menu')
   const [name, setName] = useState(member.name)
   const [memo, setMemo] = useState(member.memo)
+  const [copied, setCopied] = useState(false)
   const update = useMembersUpdate<Error>()
   const remove = useMembersRemove<Error>()
+  const reissue = useMembersReissue<Error>()
 
   // 회원 목록·일지 목록 갱신
   const refresh = () => queryClient.invalidateQueries({ predicate: (q) => typeof q.queryKey[0] === 'string' && q.queryKey[0].startsWith('/api/v1/') })
@@ -30,6 +32,7 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
     setMemo(member.memo)
     update.reset()
     remove.reset()
+    reissue.reset()
   }
 
   return (
@@ -41,13 +44,30 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
       <Drawer open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
         <DrawerContent className="mx-auto max-w-md">
           <DrawerHeader>
-            <DrawerTitle>{mode === 'edit' ? '회원 정보 수정' : mode === 'delete' ? '회원 삭제' : member.name}</DrawerTitle>
+            <DrawerTitle>{{ menu: member.name, edit: '회원 정보 수정', reissue: '코드 재발급', delete: '회원 삭제' }[mode]}</DrawerTitle>
           </DrawerHeader>
 
           {mode === 'menu' && (
             <div className="flex flex-col px-4 pb-8">
+              <button
+                type="button"
+                onClick={async () => {
+                  // 회원에게 카톡 등으로 보낼 안내 — 주소에 코드를 넣지 않고 따로 입력하게 함
+                  const text = `[TraiNote] ${member.name}님 운동일지\n${window.location.origin}/member\n회원 코드: ${member.code}`
+                  await navigator.clipboard.writeText(text).catch(() => {})
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 1500)
+                }}
+                className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted"
+              >
+                {copied ? <Check className="size-5 text-muted-foreground" /> : <Send className="size-5 text-muted-foreground" />}
+                {copied ? '복사했어요 · 회원에게 보내 주세요' : '회원 초대 문구 복사'}
+              </button>
               <button type="button" onClick={() => setMode('edit')} className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted">
                 <Pencil className="size-5 text-muted-foreground" /> 회원 정보 수정
+              </button>
+              <button type="button" onClick={() => setMode('reissue')} className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted">
+                <RefreshCw className="size-5 text-muted-foreground" /> 코드 재발급
               </button>
               <button type="button" onClick={() => setMode('delete')} className="flex h-12 items-center gap-3 rounded-lg px-2 text-left text-destructive active:bg-muted">
                 <Trash2 className="size-5" /> 회원 삭제
@@ -70,6 +90,40 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
                 저장
               </Button>
             </form>
+          )}
+
+          {mode === 'reissue' && (
+            <div className="flex flex-col gap-4 px-4 pb-8">
+              <p className="text-sm text-muted-foreground">
+                새 코드를 발급하면 기존 코드(#{member.code})는 더 이상 쓸 수 없고, 기존 코드로 들어온 회원 기기는 로그아웃돼요. 운동 기록은
+                그대로 유지돼요.
+              </p>
+              {reissue.error && <p className="text-sm text-destructive">{reissue.error.message}</p>}
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="secondary" className="h-12 rounded-xl text-base" onClick={() => setMode('menu')}>
+                  취소
+                </Button>
+                <Button
+                  className="h-12 rounded-xl text-base"
+                  disabled={reissue.isPending}
+                  onClick={() =>
+                    reissue.mutate(
+                      { code: member.code },
+                      {
+                        // 주소의 회원 코드가 바뀌므로 새 코드로 이동
+                        onSuccess: async (updated) => {
+                          close()
+                          navigate(`/workouts/${updated.code}?date=${date}`, { replace: true })
+                          await refresh()
+                        },
+                      },
+                    )
+                  }
+                >
+                  재발급
+                </Button>
+              </div>
+            </div>
           )}
 
           {mode === 'delete' && (
