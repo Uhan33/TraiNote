@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getAuthControllerMeQueryKey, useAuthControllerLogin } from '@/api/generated'
+import { getAuthMeQueryKey, useAuthLogin } from '@/api/generated'
 import AuthLayout, { Field, inputClass } from './AuthLayout'
 
 export default function LoginPage() {
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const queryClient = useQueryClient()
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
-  const login = useAuthControllerLogin<Error>()
+  const login = useAuthLogin<Error>()
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,7 +20,7 @@ export default function LoginPage() {
       { data: { loginId, password } },
       {
         onSuccess: (trainer) => {
-          queryClient.setQueryData(getAuthControllerMeQueryKey(), trainer)
+          queryClient.setQueryData(getAuthMeQueryKey(), trainer)
           navigate(params.get('next') ?? '/workouts', { replace: true })
         },
       },

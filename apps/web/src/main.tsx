@@ -7,6 +7,7 @@ import AppLayout, { ComingSoon } from '@/components/AppLayout'
 import LoginPage from '@/features/auth/LoginPage'
 import RequireAuth, { GuestOnly } from '@/features/auth/RequireAuth'
 import SignupPage from '@/features/auth/SignupPage'
+import SettingsPage from '@/features/settings/SettingsPage'
 import WorkoutEditPage from '@/features/workouts/WorkoutEditPage'
 import WorkoutsPage, { NoMemberSelected } from '@/features/workouts/WorkoutsPage'
 
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="homework" element={<ComingSoon />} />
                 <Route path="meals" element={<ComingSoon />} />
                 <Route path="body" element={<ComingSoon />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Route>
           </Routes>

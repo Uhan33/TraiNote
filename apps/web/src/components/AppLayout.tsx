@@ -1,7 +1,7 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { ClipboardCheck, Dumbbell, LogOut, Scale, Utensils } from 'lucide-react'
-import { NavLink, Outlet, useMatch, useNavigate } from 'react-router'
-import { authControllerLogout, useAuthControllerMe } from '@/api/generated'
+import { ClipboardCheck, Dumbbell, LogOut, Scale, UserRound, Utensils } from 'lucide-react'
+import { NavLink, Outlet, useMatch } from 'react-router'
+import { useAuthMe } from '@/api/generated'
+import { useLogout } from '@/features/auth/useLogout'
 import ThemeToggle from './ThemeToggle'
 
 const TABS = [
@@ -9,21 +9,15 @@ const TABS = [
   { to: '/homework', label: '숙제', icon: ClipboardCheck },
   { to: '/meals', label: '식단', icon: Utensils },
   { to: '/body', label: '체중', icon: Scale },
+  { to: '/settings', label: '내 정보', icon: UserRound },
 ]
 
 // 모바일(< lg): 하단 탭 바 / PC(lg 이상): 좌측 사이드바
 export default function AppLayout() {
   // 모바일 상세 화면은 전체 화면으로 — 하단 탭 숨김
   const inDetail = !!useMatch('/workouts/:memberId')
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const me = useAuthControllerMe({ query: { staleTime: Infinity } })
-
-  const logout = async () => {
-    await authControllerLogout().catch(() => {}) // 실패해도 화면은 로그아웃 처리
-    queryClient.clear()
-    navigate('/login', { replace: true })
-  }
+  const me = useAuthMe({ query: { staleTime: Infinity } })
+  const logout = useLogout()
 
   return (
     <div className={`flex min-h-dvh lg:h-dvh ${inDetail ? '' : 'pb-[calc(4rem+env(safe-area-inset-bottom))]'} lg:pb-0`}>
@@ -67,7 +61,7 @@ export default function AppLayout() {
       <nav
         className={`fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden ${inDetail ? 'hidden' : ''}`}
       >
-        <ul className="mx-auto grid h-16 max-w-md grid-cols-4">
+        <ul className="mx-auto grid h-16 max-w-md grid-cols-5">
           {TABS.map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <NavLink

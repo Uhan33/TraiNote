@@ -1,31 +1,34 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Check, ChevronLeft, History, Minus, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
+import { ApiError } from '@/api/fetcher'
+import {
+  getWorkoutsGetQueryKey,
+  useMembersList,
+  useWorkoutsGet,
+  useWorkoutsMemberLoggedDates,
+  useWorkoutsPrevious,
+  workoutsSave,
+  type MemberDto,
+} from '@/api/generated'
 import CopyId from './CopyId'
 import DateNav from './DateNav'
-import {
-  EXERCISE_CATALOG,
-  findPreviousWorkout,
-  findWorkout,
-  formatDateLabel,
-  members,
-  saveWorkout,
-  todayKey,
-  workouts,
-  type Member,
-  type Workout,
-  type WorkoutSet,
-} from './data'
+import MemberMenu from './MemberMenu'
+import { EMPTY_FORM, EXERCISE_CATALOG, formatDateLabel, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
+import { useAutosave, type SaveStatus } from './useAutosave'
 
 export default function WorkoutEditPage() {
-  const { memberId } = useParams()
+  const { memberId: code = '' } = useParams()
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const date = params.get('date') ?? todayKey()
-  const member = members.find((m) => m.id === memberId)
+  const members = useMembersList()
+  const member = members.data?.find((m) => m.code === code.toUpperCase())
+  const dates = useWorkoutsMemberLoggedDates(code, { query: { enabled: !!member } })
 
   return (
     <div className="flex flex-1 flex-col">
@@ -34,59 +37,83 @@ export default function WorkoutEditPage() {
           <Button variant="ghost" size="icon-lg" aria-label="회원 목록" className="lg:hidden" onClick={() => navigate(`/workouts?date=${date}`)}>
             <ChevronLeft className="size-6" />
           </Button>
-          <span className="text-lg font-semibold">{member?.name ?? '회원 없음'}</span>
-          {member && <CopyId id={member.id} />}
+          <span className="text-lg font-semibold">{member?.name ?? (members.isPending ? '' : '회원 없음')}</span>
+          {member && <CopyId id={member.code} />}
+          {member && <MemberMenu member={member} date={date} />}
         </div>
         {member && (
           <div className="max-w-2xl px-3 pb-2 lg:px-5">
-            <DateNav
-              value={date}
-              onChange={(d) => setParams({ date: d }, { replace: true })}
-              markedDates={workouts.filter((w) => w.memberId === member.id).map((w) => w.date)}
-            />
+            <DateNav value={date} onChange={(d) => setParams({ date: d }, { replace: true })} markedDates={dates.data ?? []} />
           </div>
         )}
       </header>
 
+      {members.isSuccess && !member && <p className="py-16 text-center text-muted-foreground">회원을 찾을 수 없어요</p>}
       {/* key: 회원·날짜가 바뀌면 편집 상태를 새로 로드 */}
-      {member && <WorkoutEditor key={`${member.id}-${date}`} member={member} date={date} />}
+      {member && <WorkoutLoader key={`${member.code}-${date}`} member={member} date={date} />}
     </div>
   )
 }
 
-function WorkoutEditor({ member, date }: { member: Member; date: string }) {
-  const [workout, setWorkout] = useState<Workout>(() => {
-    const existing = findWorkout(member.id, date)
-    return existing ? structuredClone(existing) : { memberId: member.id, date, title: '', memo: '', exercises: [] }
-  })
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const previous = workout.exercises.length === 0 ? findPreviousWorkout(member.id, date) : undefined
+// 서버 일지를 불러온 뒤 편집기 표시. 404 = 그날 일지 없음 → 빈 편집기
+function WorkoutLoader({ member, date }: { member: MemberDto; date: string }) {
+  const log = useWorkoutsGet(member.code, date, { query: { retry: false, staleTime: Infinity } })
+  const error: unknown = log.error
+  const notFound = error instanceof ApiError && error.status === 404
 
-  // 수정할 때마다 자동 저장
-  const update = (fn: (w: Workout) => void) => {
+  if (log.isPending) return <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
+  if (log.isError && !notFound) return <p className="py-16 text-center text-destructive">일지를 불러오지 못했어요</p>
+  return <WorkoutEditor member={member} date={date} initial={log.data ? toForm(log.data) : EMPTY_FORM} />
+}
+
+function WorkoutEditor({ member, date, initial }: { member: MemberDto; date: string; initial: WorkoutForm }) {
+  const queryClient = useQueryClient()
+  const [workout, setWorkout] = useState<WorkoutForm>(initial)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const previous = useWorkoutsPrevious(member.code, { before: date }, { query: { retry: false, enabled: workout.exercises.length === 0 } })
+
+  const autosave = useAutosave(async (value: WorkoutForm) => {
+    const body = toApi(value)
+    await workoutsSave(member.code, date, body)
+    // 이 일지 캐시를 저장한 값으로 교체 — 다시 열었을 때 옛 내용으로 덮어쓰지 않게
+    const key = getWorkoutsGetQueryKey(member.code, date)
+    if (body.exercises.length) queryClient.setQueryData(key, { ...body, memberCode: member.code, date })
+    else queryClient.removeQueries({ queryKey: key })
+    // 목록 요약·달력 점·지난 기록 갱신
+    await queryClient.invalidateQueries({
+      predicate: (q) => typeof q.queryKey[0] === 'string' && q.queryKey[0].includes('/workouts') && q.queryKey[0] !== key[0],
+    })
+  })
+
+  const update = (fn: (w: WorkoutForm) => void) => {
     const next = structuredClone(workout)
     fn(next)
     setWorkout(next)
-    saveWorkout(next)
+    autosave.queue(next)
   }
 
   return (
     <>
       <div className="flex w-full max-w-2xl flex-col gap-6 px-5 pt-5 pb-10 lg:px-8">
-        <input
-          value={workout.title}
-          onChange={(e) => update((w) => void (w.title = e.target.value))}
-          placeholder="오늘의 운동 (예: 하체)"
-          className="w-full bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/50"
-        />
+        <div className="flex items-center gap-3">
+          <input
+            value={workout.title}
+            onChange={(e) => update((w) => void (w.title = e.target.value))}
+            placeholder="오늘의 운동 (예: 하체)"
+            maxLength={50}
+            className="min-w-0 flex-1 bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/50"
+          />
+          <SaveIndicator status={autosave.status} onRetry={autosave.retry} />
+        </div>
 
-        {previous && (
+        {previous.data && workout.exercises.length === 0 && (
           <button
             type="button"
             onClick={() =>
               update((w) => {
-                w.title ||= previous.title
-                w.exercises = previous.exercises.map((e) => ({ ...e, sets: e.sets.map((s) => ({ ...s, done: false })) }))
+                const prev = toForm(previous.data)
+                w.title ||= prev.title
+                w.exercises = prev.exercises.map((e) => ({ ...e, sets: e.sets.map((s) => ({ ...s, done: false })) }))
               })
             }
             className="flex items-center gap-3 rounded-2xl border border-dashed p-4 text-left active:bg-muted"
@@ -95,7 +122,7 @@ function WorkoutEditor({ member, date }: { member: Member; date: string }) {
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">지난 기록 불러오기</span>
               <span className="block truncate text-sm text-muted-foreground">
-                {formatDateLabel(previous.date)} · {previous.title || '운동'} · {previous.exercises.map((e) => e.name).join(', ')}
+                {formatDateLabel(previous.data.date)} · {previous.data.title || '운동'} · {previous.data.exercises.map((e) => e.name).join(', ')}
               </span>
             </span>
           </button>
@@ -121,7 +148,7 @@ function WorkoutEditor({ member, date }: { member: Member; date: string }) {
               <span className="text-xs text-muted-foreground">회</span>
               <span className="text-xs text-muted-foreground">완료</span>
               {exercise.sets.map((set, si) => {
-                const patch = (p: Partial<WorkoutSet>) => update((w) => void Object.assign(w.exercises[ei].sets[si], p))
+                const patch = (p: Partial<FormSet>) => update((w) => void Object.assign(w.exercises[ei].sets[si], p))
                 return <SetRow key={si} index={si} set={set} onChange={patch} />
               })}
             </div>
@@ -160,6 +187,7 @@ function WorkoutEditor({ member, date }: { member: Member; date: string }) {
           value={workout.memo}
           onChange={(e) => update((w) => void (w.memo = e.target.value))}
           placeholder="메모 (컨디션, 느낀 점 등)"
+          maxLength={2000}
           rows={3}
           className="w-full resize-none rounded-xl border bg-transparent p-3 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
         />
@@ -177,7 +205,23 @@ function WorkoutEditor({ member, date }: { member: Member; date: string }) {
   )
 }
 
-function SetRow({ index, set, onChange }: { index: number; set: WorkoutSet; onChange: (p: Partial<WorkoutSet>) => void }) {
+
+function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry: () => void }) {
+  if (status === 'error') {
+    return (
+      <button type="button" onClick={onRetry} className="shrink-0 text-sm font-medium text-destructive">
+        저장 실패 · 다시 시도
+      </button>
+    )
+  }
+  return (
+    <span className="shrink-0 text-sm text-muted-foreground" aria-live="polite">
+      {status === 'saved' ? '저장됨' : '저장 중…'}
+    </span>
+  )
+}
+
+function SetRow({ index, set, onChange }: { index: number; set: FormSet; onChange: (p: Partial<FormSet>) => void }) {
   return (
     <>
       <span className="text-sm font-medium text-muted-foreground">{index + 1}</span>

@@ -23,6 +23,10 @@ export class Member {
   @Column({ type: 'varchar', length: 20 })
   name: string;
 
+  // 트레이너만 보는 메모 (오전반, 부상 이력, 목표 등) — 회원 화면에는 노출하지 않음
+  @Column({ type: 'varchar', length: 500, default: '' })
+  memo: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

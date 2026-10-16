@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ApiError } from '@/api/fetcher'
-import { getAuthControllerMeQueryKey, useAuthControllerSignup, type SignupDto } from '@/api/generated'
+import { getAuthMeQueryKey, useAuthSignup, type SignupDto } from '@/api/generated'
 import AuthLayout, { Field, inputClass } from './AuthLayout'
 
 type Errors = Partial<Record<keyof SignupDto, string>>
@@ -24,7 +24,7 @@ export default function SignupPage() {
   const queryClient = useQueryClient()
   const [form, setForm] = useState<SignupDto>({ loginId: '', password: '', name: '', email: '' })
   const [errors, setErrors] = useState<Errors>({})
-  const signup = useAuthControllerSignup<Error>()
+  const signup = useAuthSignup<Error>()
   const set = (key: keyof SignupDto) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: e.target.value })
 
   const submit = (e: React.FormEvent) => {
@@ -36,7 +36,7 @@ export default function SignupPage() {
       { data: { ...form, email: form.email || undefined } },
       {
         onSuccess: (trainer) => {
-          queryClient.setQueryData(getAuthControllerMeQueryKey(), trainer)
+          queryClient.setQueryData(getAuthMeQueryKey(), trainer)
           navigate('/workouts', { replace: true })
         },
         // 아이디·이메일 중복은 해당 칸 아래에 표시

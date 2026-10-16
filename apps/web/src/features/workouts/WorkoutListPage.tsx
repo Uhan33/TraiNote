@@ -4,16 +4,22 @@ import { NavLink, useSearchParams } from 'react-router'
 import { Input } from '@/components/ui/input'
 import AddMemberButton from './AddMemberButton'
 import DateNav from './DateNav'
-import { findWorkout, members, summarize, todayKey, workouts } from './data'
+import { useMembersList, useWorkoutsListByDate, useWorkoutsLoggedDates } from '@/api/generated'
+import { summarize, todayKey } from './data'
 
 export default function WorkoutListPage() {
   const [params, setParams] = useSearchParams()
   const date = params.get('date') ?? todayKey()
   const [query, setQuery] = useState('')
 
-  const rows = members
-    .filter((m) => m.name.includes(query.trim()))
-    .map((m) => ({ member: m, workout: findWorkout(m.id, date) }))
+  const members = useMembersList()
+  const logs = useWorkoutsListByDate({ date })
+  const dates = useWorkoutsLoggedDates()
+  const logByCode = new Map(logs.data?.map((log) => [log.memberCode, log]))
+
+  const rows = (members.data ?? [])
+    .filter((m) => m.name.includes(query.trim()) || m.memo.includes(query.trim()))
+    .map((m) => ({ member: m, workout: logByCode.get(m.code) }))
   const doneCount = rows.filter((r) => r.workout).length
 
   return (
@@ -27,7 +33,7 @@ export default function WorkoutListPage() {
         <DateNav
           value={date}
           onChange={(d) => setParams({ date: d }, { replace: true })}
-          markedDates={[...new Set(workouts.map((w) => w.date))]}
+          markedDates={dates.data ?? []}
         />
       </div>
 
@@ -43,16 +49,19 @@ export default function WorkoutListPage() {
 
       <ul className="flex flex-col px-3 pb-6">
         {rows.map(({ member, workout }) => {
-          const summary = workout && summarize(workout)
+          const summary = workout && summarize(workout.exercises)
           return (
-            <li key={member.id}>
+            <li key={member.code}>
               <NavLink
-                to={`/workouts/${member.id}?date=${date}`}
+                to={`/workouts/${member.code}?date=${date}`}
                 className={({ isActive }) => `flex items-center gap-3 rounded-xl px-2 py-3 active:bg-muted lg:hover:bg-muted/60 ${isActive ? 'lg:bg-muted' : ''}`}
               >
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted font-semibold">{member.name[0]}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-semibold">{member.name}</span>
+                  <span className="flex items-baseline gap-2">
+                    <span className="shrink-0 font-semibold">{member.name}</span>
+                    {member.memo && <span className="truncate text-sm text-muted-foreground">{member.memo}</span>}
+                  </span>
                   <span className="block truncate text-sm text-muted-foreground">
                     {workout && summary
                       ? `${workout.title || '운동'} · ${summary.exerciseCount}개 운동 · ${summary.setCount}세트`
@@ -65,7 +74,18 @@ export default function WorkoutListPage() {
             </li>
           )
         })}
-        {rows.length === 0 && <p className="py-16 text-center text-muted-foreground">검색 결과가 없어요</p>}
+        {members.isPending && <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>}
+        {members.isError && <p className="py-16 text-center text-destructive">회원 목록을 불러오지 못했어요</p>}
+        {members.isSuccess && members.data.length === 0 && (
+          <p className="py-16 text-center text-muted-foreground">
+            아직 회원이 없어요
+            <br />
+            오른쪽 위 <span className="font-semibold text-foreground">회원 추가</span>로 시작해 보세요
+          </p>
+        )}
+        {members.isSuccess && members.data.length > 0 && rows.length === 0 && (
+          <p className="py-16 text-center text-muted-foreground">검색 결과가 없어요</p>
+        )}
       </ul>
     </div>
   )
