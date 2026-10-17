@@ -26,3 +26,8 @@
 		-Server
 	}
 }
+
+# www 로 들어오면 대표 주소로 영구 이동 — 쿠키·설치 앱(PWA)이 주소별로 갈리지 않게 한 주소만 사용
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

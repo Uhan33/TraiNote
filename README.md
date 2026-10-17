@@ -57,6 +57,13 @@ pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드
 - 서버 경로 `~/trainote` (GitHub 저장소 clone), 비밀 값은 서버의 `deploy/.env` (`deploy/.env.example` 참고, 커밋 금지)
 - api 컨테이너가 시작할 때 마이그레이션을 먼저 실행
 - 로그: `ssh trainote 'cd trainote && docker compose -f deploy/docker-compose.yml logs -f api'`
+  - API 요청마다 JSON 1줄: `at`(한국 시간)·`method`·`path`·`status`·`ms`·`ip`·`ua`·`trainerId`/`memberId` (회원 코드는 남기지 않음, `/api/health` 제외)
+  - 특정 트레이너: `... logs api | grep '<trainerId>'`, 오류만: `... logs api | grep '"status":5'`
+  - 보관: 20MB × 10개 (넘으면 오래된 것부터 삭제)
+- **백업**: 매일 04:00 `deploy/backup.sh` 가 DB 덤프를 S3 `trainote-backups-847547470208/daily/` 에 업로드 (30일 보관, 서버는 업로드만 가능)
+  - cron: 서버 `/etc/cron.d/trainote-backup` → 로그 `~/backup.log`
+  - 복원: 맥에서 `aws s3 cp s3://trainote-backups-847547470208/daily/<파일> . --profile uhan` → 서버로 복사 →
+    `docker compose -f deploy/docker-compose.yml exec -T postgres pg_restore -U trainote -d trainote --clean --if-exists < <파일>`
 - DB 접속: `ssh trainote 'cd trainote && docker compose -f deploy/docker-compose.yml exec postgres psql -U trainote'`
 
 ## 문의 확인 (운영)
@@ -64,9 +71,14 @@ pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드
 트레이너가 내 정보 > 문의하기로 보낸 문의는 `inquiry` 테이블에 쌓인다 (답변 화면은 admin 생길 때). 위 DB 접속 후 실행.
 
 ```sql
-select i.created_at, t.login_id, t.name, i.category, i.title, i.content, i.contact, i.app_version, i.user_agent
+-- 답변 대기 문의
+select i.id, i.created_at, t.login_id, t.name, i.category, i.title, i.content, i.contact, i.app_version, i.user_agent
 from inquiry i join trainer t on t.id = i.trainer_id
-order by i.created_at desc;
+where i.answer is null
+order by i.created_at;
+
+-- 답변 — 트레이너의 내 정보 > 문의 내역에 바로 표시 (줄바꿈은 E'...\n...')
+update inquiry set answer = '답변 내용', answered_at = now() where id = '<문의 id>';
 ```
 
 category: `usage` 사용 방법 · `bug` 오류 신고 · `feature` 기능 제안 · `etc` 기타

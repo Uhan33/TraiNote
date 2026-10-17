@@ -5,6 +5,16 @@ import { INQUIRY_CATEGORIES, type InquiryCategory } from '../libs/database/entit
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
+export class InquiryDto {
+  @ApiProperty() id: string;
+  @ApiProperty({ enum: INQUIRY_CATEGORIES }) category: InquiryCategory;
+  @ApiProperty() title: string;
+  @ApiProperty() content: string;
+  @ApiProperty({ example: '2026-10-17T03:35:50.325Z' }) createdAt: string;
+  @ApiProperty({ type: String, nullable: true, description: '운영자 답변. null = 답변 대기' }) answer: string | null;
+  @ApiProperty({ type: String, nullable: true }) answeredAt: string | null;
+}
+
 export class CreateInquiryDto {
   @ApiProperty({ enum: INQUIRY_CATEGORIES, description: 'usage 사용 방법 · bug 오류 신고 · feature 기능 제안 · etc 기타' })
   @IsIn(INQUIRY_CATEGORIES, { message: '문의 유형을 선택하세요' })

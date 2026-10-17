@@ -20,9 +20,10 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "dev": "nest start --watch",
     "serve": "nest start --watch",
-    "migration:generate": "nest build && typeorm -d dist/libs/database/data-source.js migration:generate",
-    "migration:run": "nest build && typeorm -d dist/libs/database/data-source.js migration:run",
-    "migration:revert": "nest build && typeorm -d dist/libs/database/data-source.js migration:revert"
+    "migration:build": "rm -rf .migrate && tsc -p tsconfig.build.json --outDir .migrate --incremental false",
+    "migration:generate": "pnpm migration:build && typeorm -d .migrate/libs/database/data-source.js migration:generate",
+    "migration:run": "pnpm migration:build && typeorm -d .migrate/libs/database/data-source.js migration:run",
+    "migration:revert": "pnpm migration:build && typeorm -d .migrate/libs/database/data-source.js migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.3",

@@ -3,23 +3,19 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useAuthMe, useInquiriesCreate, type CreateInquiryDtoCategory } from '@/api/generated'
-
-const CATEGORIES: { value: CreateInquiryDtoCategory; label: string }[] = [
-  { value: 'usage', label: '사용 방법' },
-  { value: 'bug', label: '오류 신고' },
-  { value: 'feature', label: '기능 제안' },
-  { value: 'etc', label: '기타' },
-]
+import { useQueryClient } from '@tanstack/react-query'
+import { getInquiriesListQueryKey, useAuthMe, useInquiriesCreate, type CreateInquiryDtoCategory } from '@/api/generated'
+import { INQUIRY_CATEGORIES } from './inquiry'
 
 const TITLE_MAX = 100
 const CONTENT_MAX = 2000
 
-// 내 정보 > 문의하기 — 운영자가 DB 에서 확인. 답변은 남긴 연락처로
+// 내 정보 > 문의하기 — 운영자가 DB 에서 확인·답변, 트레이너는 문의 내역에서 답변 확인
 export default function InquiryPage() {
   const navigate = useNavigate()
   const me = useAuthMe({ query: { staleTime: Infinity } })
-  const create = useInquiriesCreate<Error>()
+  const queryClient = useQueryClient()
+  const create = useInquiriesCreate<Error>({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getInquiriesListQueryKey() }) } })
   const [category, setCategory] = useState<CreateInquiryDtoCategory | null>(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -34,11 +30,16 @@ export default function InquiryPage() {
         <CircleCheck className="size-12 text-muted-foreground" />
         <h1 className="mt-4 text-xl font-bold">문의를 보냈어요</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {contactValue ? '확인 후 남겨 주신 연락처로 답변드릴게요.' : '보내 주신 내용은 서비스 개선에 참고할게요.'}
+          답변은 내 정보 &gt; 문의 내역에서 확인할 수 있어요.
         </p>
-        <Link to="/settings" className={buttonVariants({ variant: 'secondary', className: 'mt-8 h-12 rounded-xl px-8 text-base' })}>
-          확인
-        </Link>
+        <div className="mt-8 flex gap-2">
+          <Link to="/settings" className={buttonVariants({ variant: 'secondary', className: 'h-12 rounded-xl px-6 text-base' })}>
+            확인
+          </Link>
+          <Link to="/settings/inquiries" className={buttonVariants({ className: 'h-12 rounded-xl px-6 text-base' })}>
+            문의 내역 보기
+          </Link>
+        </div>
       </div>
     )
   }
@@ -63,7 +64,7 @@ export default function InquiryPage() {
         <fieldset className="flex flex-col gap-2">
           <legend className="pb-2 text-sm font-medium">문의 유형</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {CATEGORIES.map((c) => (
+            {INQUIRY_CATEGORIES.map((c) => (
               <button
                 key={c.value}
                 type="button"
@@ -109,7 +110,7 @@ export default function InquiryPage() {
 
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">
-            답변 받을 연락처 <span className="font-normal text-muted-foreground">(선택 · 이메일 또는 전화번호)</span>
+            연락처 <span className="font-normal text-muted-foreground">(선택 · 따로 연락이 필요할 때 · 이메일 또는 전화번호)</span>
           </span>
           <Input
             value={contactValue}
