@@ -56,10 +56,10 @@ pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드
 
 - 서버 경로 `~/trainote` (GitHub 저장소 clone), 비밀 값은 서버의 `deploy/.env` (`deploy/.env.example` 참고, 커밋 금지)
 - api 컨테이너가 시작할 때 마이그레이션을 먼저 실행
-- 로그: `ssh trainote 'cd trainote && docker compose -f deploy/docker-compose.yml logs -f api'`
-  - API 요청마다 JSON 1줄: `at`(한국 시간)·`method`·`path`·`status`·`ms`·`ip`·`ua`·`trainerId`/`memberId` (회원 코드는 남기지 않음, `/api/health` 제외)
-  - 특정 트레이너: `... logs api | grep '<trainerId>'`, 오류만: `... logs api | grep '"status":5'`
-  - 보관: 20MB × 10개 (넘으면 오래된 것부터 삭제)
+- 로그: 서버 journald 에 보관 (배포해도 유지, 최대 1GB·30일 — `/etc/systemd/journald.conf.d/trainote.conf`)
+  - API: `ssh trainote 'journalctl -t trainote-api -o cat --since today'` — 요청마다 JSON 1줄: `at`(한국 시간)·`method`·`path`·`status`·`ms`·`ip`·`ua`·`trainerId`/`memberId` (회원 코드는 남기지 않음, `/api/health` 제외)
+  - 웹(Caddy) 접근 로그(모든 요청): `ssh trainote 'journalctl -t trainote-web -o cat --since today'`
+  - 특정 트레이너: `... | grep '<trainerId>'`, 오류만: `... | grep '"status":5'`, 실시간: `-f`
 - **백업**: 매일 04:00 `deploy/backup.sh` 가 DB 덤프를 S3 `trainote-backups-847547470208/daily/` 에 업로드 (30일 보관, 서버는 업로드만 가능)
   - cron: 서버 `/etc/cron.d/trainote-backup` → 로그 `~/backup.log`
   - 복원: 맥에서 `aws s3 cp s3://trainote-backups-847547470208/daily/<파일> . --profile uhan` → 서버로 복사 →
