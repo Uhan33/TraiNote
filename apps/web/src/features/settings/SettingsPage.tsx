@@ -1,4 +1,5 @@
-import { LogOut } from 'lucide-react'
+import { ChevronRight, LogOut, MessageSquare } from 'lucide-react'
+import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuthMe } from '@/api/generated'
 import { useLogout } from '@/features/auth/useLogout'
@@ -22,6 +23,10 @@ export default function SettingsPage() {
           <span>다크 모드</span>
           <ThemeToggle />
         </div>
+        <Link to="/settings/inquiry" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
+          <MessageSquare className="size-5 text-muted-foreground" /> 문의하기
+          <ChevronRight className="ml-auto size-5 text-muted-foreground" />
+        </Link>
         <button type="button" onClick={logout} className="flex h-14 w-full items-center gap-3 px-4 text-left text-destructive active:bg-muted">
           <LogOut className="size-5" /> 로그아웃
         </button>

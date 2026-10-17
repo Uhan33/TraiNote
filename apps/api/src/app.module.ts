@@ -6,6 +6,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BodyModule } from './body/body.module.js';
+import { InquiriesModule } from './inquiries/inquiries.module.js';
 import { DatabaseModule } from './libs/database/database.module.js';
 import { MemberViewModule } from './member-view/member-view.module.js';
 import { MembersModule } from './members/members.module.js';
@@ -22,6 +23,7 @@ import { WorkoutsModule } from './workouts/workouts.module.js';
     WorkoutsModule,
     MemberViewModule,
     BodyModule,
+    InquiriesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

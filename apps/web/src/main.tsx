@@ -16,6 +16,7 @@ import MemberHomeworkPage from '@/features/member-view/MemberHomeworkPage'
 import MemberLayout from '@/features/member-view/MemberLayout'
 import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
 import MemberWorkoutsPage from '@/features/member-view/MemberWorkoutsPage'
+import InquiryPage from '@/features/settings/InquiryPage'
 import SettingsPage from '@/features/settings/SettingsPage'
 import WorkoutEditPage from '@/features/workouts/WorkoutEditPage'
 import WorkoutsPage, { NoMemberSelected } from '@/features/workouts/WorkoutsPage'
@@ -57,6 +58,7 @@ createRoot(document.getElementById('root')!).render(
                   <Route path=":memberId" element={<BodyDetailPage />} />
                 </Route>
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings/inquiry" element={<InquiryPage />} />
               </Route>
             </Route>
           </Routes>

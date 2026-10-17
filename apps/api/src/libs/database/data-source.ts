@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { DataSource, type DataSourceOptions } from 'typeorm';
 import { BodyRecord } from './entities/body-record.entity.js';
+import { Inquiry } from './entities/inquiry.entity.js';
 import { Member } from './entities/member.entity.js';
 import { RefreshToken } from './entities/refresh-token.entity.js';
 import { Trainer } from './entities/trainer.entity.js';
@@ -13,7 +14,7 @@ try {
   // .env 없음 — 배포 환경은 실제 환경변수 사용
 }
 
-export const entities = [Trainer, RefreshToken, Member, WorkoutLog, BodyRecord];
+export const entities = [Trainer, RefreshToken, Member, WorkoutLog, BodyRecord, Inquiry];
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',

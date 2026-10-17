@@ -45,6 +45,18 @@ pnpm --filter api migration:revert                                    # 마지�
 - `src/libs/` 의 다른 인프라 모듈(redis·mailer 등)은 필요할 때 같은 위치에 추가
 - 주입받는 필드 이름은 **클래스 이름의 camelCase** — `memberRepository: MemberRepository`, `membersService: MembersService`, `jwtService: JwtService` (역할이 이름에 드러나게)
 
+## 문의 확인 (운영)
+
+트레이너가 내 정보 > 문의하기로 보낸 문의는 `inquiry` 테이블에 쌓인다 (답변 화면은 admin 생길 때).
+
+```sql
+select i.created_at, t.login_id, t.name, i.category, i.title, i.content, i.contact, i.app_version, i.user_agent
+from inquiry i join trainer t on t.id = i.trainer_id
+order by i.created_at desc;
+```
+
+category: `usage` 사용 방법 · `bug` 오류 신고 · `feature` 기능 제안 · `etc` 기타
+
 ## 브랜치
 
 - `develop` — 개발 기본 브랜치. 작업은 여기서(또는 여기서 딴 기능 브랜치에서)
