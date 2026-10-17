@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "dev:phone": "LAN=1 pnpm -r --parallel dev",
+    "preview:phone": "pnpm --filter web build && LAN=1 pnpm --parallel --filter api --filter web run serve",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test"

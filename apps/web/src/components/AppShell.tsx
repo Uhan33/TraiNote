@@ -1,5 +1,6 @@
 import { LogOut } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router'
+import InstallHint from './InstallHint'
 import type { Tab } from './tabs'
 import ThemeToggle from './ThemeToggle'
 
@@ -63,6 +64,7 @@ export default function AppShell({
       <nav
         className={`fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden ${inDetail ? 'hidden md:block' : ''}`}
       >
+        <InstallHint />
         <ul className="mx-auto grid h-16 max-w-md grid-flow-col auto-cols-fr">
           {tabs.map(({ to, label, icon: Icon }) => (
             <li key={to}>

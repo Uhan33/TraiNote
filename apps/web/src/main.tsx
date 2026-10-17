@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import './index.css'
 import AppLayout, { ComingSoon } from '@/components/AppLayout'
+import ManifestSwitch from '@/components/ManifestSwitch'
 import BodyDetailPage from '@/features/body/BodyDetailPage'
 import BodyPage from '@/features/body/BodyPage'
 import LoginPage from '@/features/auth/LoginPage'
@@ -27,6 +28,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ManifestSwitch />
         <div className="mx-auto min-h-dvh max-w-md md:max-w-none">
           <Routes>
             <Route index element={<LandingPage />} />
