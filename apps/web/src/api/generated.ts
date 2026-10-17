@@ -154,6 +154,31 @@ export interface SaveBodyRecordDto {
   skeletalMuscleKg?: number | null;
 }
 
+export type InquiryDtoCategory = typeof InquiryDtoCategory[keyof typeof InquiryDtoCategory];
+
+
+export const InquiryDtoCategory = {
+  usage: 'usage',
+  bug: 'bug',
+  feature: 'feature',
+  etc: 'etc',
+} as const;
+
+export interface InquiryDto {
+  id: string;
+  category: InquiryDtoCategory;
+  title: string;
+  content: string;
+  createdAt: string;
+  /**
+     * 운영자 답변. null = 답변 대기
+     * @nullable
+     */
+  answer: string | null;
+  /** @nullable */
+  answeredAt: string | null;
+}
+
 /**
  * usage 사용 방법 · bug 오류 신고 · feature 기능 제안 · etc 기타
  */
@@ -218,17 +243,17 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export const getAppGetHelloUrl = () => {
+export const getAppHealthUrl = () => {
 
 
 
 
-  return `/api/v1`
+  return `/api/health`
 }
 
-export const appGetHello = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+export const appHealth = async ( options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
 
-  return customFetch<void>(getAppGetHelloUrl(),
+  return customFetch<unknown>(getAppHealthUrl(),
   {
     ...options,
     method: 'GET'
@@ -241,66 +266,66 @@ export const appGetHello = async ( options?: Parameters<typeof customFetch>[1]):
 
 
 
-export const getAppGetHelloQueryKey = () => {
+export const getAppHealthQueryKey = () => {
     return [
-    `/api/v1`
+    `/api/health`
     ] as const;
     }
 
 
-export const getAppGetHelloQueryOptions = <TData = Awaited<ReturnType<typeof appGetHello>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appGetHello>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getAppHealthQueryOptions = <TData = Awaited<ReturnType<typeof appHealth>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appHealth>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAppGetHelloQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getAppHealthQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof appGetHello>>> = ({ signal }) => appGetHello({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof appHealth>>> = ({ signal }) => appHealth({ signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof appGetHello>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof appHealth>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type AppGetHelloQueryResult = NonNullable<Awaited<ReturnType<typeof appGetHello>>>
-export type AppGetHelloQueryError = unknown
+export type AppHealthQueryResult = NonNullable<Awaited<ReturnType<typeof appHealth>>>
+export type AppHealthQueryError = unknown
 
 
-export function useAppGetHello<TData = Awaited<ReturnType<typeof appGetHello>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appGetHello>>, TError, TData>> & Pick<
+export function useAppHealth<TData = Awaited<ReturnType<typeof appHealth>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appHealth>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof appGetHello>>,
+          Awaited<ReturnType<typeof appHealth>>,
           TError,
-          Awaited<ReturnType<typeof appGetHello>>
+          Awaited<ReturnType<typeof appHealth>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAppGetHello<TData = Awaited<ReturnType<typeof appGetHello>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appGetHello>>, TError, TData>> & Pick<
+export function useAppHealth<TData = Awaited<ReturnType<typeof appHealth>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appHealth>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof appGetHello>>,
+          Awaited<ReturnType<typeof appHealth>>,
           TError,
-          Awaited<ReturnType<typeof appGetHello>>
+          Awaited<ReturnType<typeof appHealth>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAppGetHello<TData = Awaited<ReturnType<typeof appGetHello>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appGetHello>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useAppHealth<TData = Awaited<ReturnType<typeof appHealth>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appHealth>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useAppGetHello<TData = Awaited<ReturnType<typeof appGetHello>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appGetHello>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export function useAppHealth<TData = Awaited<ReturnType<typeof appHealth>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appHealth>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getAppGetHelloQueryOptions(options)
+  const queryOptions = getAppHealthQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2543,6 +2568,101 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getBodyRemoveMutationOptions(options), queryClient);
     }
+
+export const getInquiriesListUrl = () => {
+
+
+
+
+  return `/api/v1/inquiries`
+}
+
+export const inquiriesList = async ( options?: Parameters<typeof customFetch>[1]): Promise<InquiryDto[]> => {
+
+  return customFetch<InquiryDto[]>(getInquiriesListUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getInquiriesListQueryKey = () => {
+    return [
+    `/api/v1/inquiries`
+    ] as const;
+    }
+
+
+export const getInquiriesListQueryOptions = <TData = Awaited<ReturnType<typeof inquiriesList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inquiriesList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getInquiriesListQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof inquiriesList>>> = ({ signal }) => inquiriesList({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof inquiriesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type InquiriesListQueryResult = NonNullable<Awaited<ReturnType<typeof inquiriesList>>>
+export type InquiriesListQueryError = unknown
+
+
+export function useInquiriesList<TData = Awaited<ReturnType<typeof inquiriesList>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof inquiriesList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof inquiriesList>>,
+          TError,
+          Awaited<ReturnType<typeof inquiriesList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useInquiriesList<TData = Awaited<ReturnType<typeof inquiriesList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inquiriesList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof inquiriesList>>,
+          TError,
+          Awaited<ReturnType<typeof inquiriesList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useInquiriesList<TData = Awaited<ReturnType<typeof inquiriesList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inquiriesList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useInquiriesList<TData = Awaited<ReturnType<typeof inquiriesList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof inquiriesList>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getInquiriesListQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getInquiriesCreateUrl = () => {
 

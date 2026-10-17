@@ -4,7 +4,7 @@ import { Trainer } from './trainer.entity.js';
 export const INQUIRY_CATEGORIES = ['usage', 'bug', 'feature', 'etc'] as const;
 export type InquiryCategory = (typeof INQUIRY_CATEGORIES)[number];
 
-// 트레이너 문의. 운영자는 DB 에서 확인 (답변 화면은 admin 생기면)
+// 트레이너 문의. 운영자는 DB 에서 확인·답변 (README 문의 확인) — 트레이너는 내 정보 > 문의 내역에서 답변 확인
 @Entity('inquiry')
 export class Inquiry {
   @PrimaryGeneratedColumn('uuid')
@@ -40,4 +40,11 @@ export class Inquiry {
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
+
+  // 운영자 답변 (null = 답변 대기)
+  @Column({ type: 'text', nullable: true })
+  answer: string | null;
+
+  @Column({ name: 'answered_at', type: 'timestamptz', nullable: true })
+  answeredAt: Date | null;
 }

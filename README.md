@@ -64,9 +64,14 @@ pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드
 트레이너가 내 정보 > 문의하기로 보낸 문의는 `inquiry` 테이블에 쌓인다 (답변 화면은 admin 생길 때). 위 DB 접속 후 실행.
 
 ```sql
-select i.created_at, t.login_id, t.name, i.category, i.title, i.content, i.contact, i.app_version, i.user_agent
+-- 답변 대기 문의
+select i.id, i.created_at, t.login_id, t.name, i.category, i.title, i.content, i.contact, i.app_version, i.user_agent
 from inquiry i join trainer t on t.id = i.trainer_id
-order by i.created_at desc;
+where i.answer is null
+order by i.created_at;
+
+-- 답변 — 트레이너의 내 정보 > 문의 내역에 바로 표시 (줄바꿈은 E'...\n...')
+update inquiry set answer = '답변 내용', answered_at = now() where id = '<문의 id>';
 ```
 
 category: `usage` 사용 방법 · `bug` 오류 신고 · `feature` 기능 제안 · `etc` 기타

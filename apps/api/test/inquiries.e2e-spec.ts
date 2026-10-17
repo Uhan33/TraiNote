@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AppModule } from './../src/app.module.js';
 import { setupApp } from './../src/app.setup.js';
 import { Inquiry } from './../src/libs/database/entities/inquiry.entity.js';
@@ -22,7 +22,7 @@ describe('inquiries (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.get<Repository<Trainer>>(getRepositoryToken(Trainer)).delete({ loginId });
+    await app.get<Repository<Trainer>>(getRepositoryToken(Trainer)).delete({ loginId: In([loginId, `${loginId}b`]) });
     await app.close();
   });
 
@@ -41,5 +41,18 @@ describe('inquiries (e2e)', () => {
     const saved = await app.get<Repository<Inquiry>>(getRepositoryToken(Inquiry)).findBy({ trainerId: me.id });
     expect(saved).toHaveLength(1);
     expect(saved[0]).toMatchObject({ category: 'bug', title: '회원 추가 오류', contact: '', userAgent: 'test-phone', appVersion: '0.1.0' });
+
+    // 문의 내역: 답변 전엔 answer null, 운영자 답변(DB 수정) 후 표시. 기기 정보·연락처는 응답에 없음
+    const before = (await trainer.get('/api/v1/inquiries').expect(200)).body;
+    expect(before).toEqual([expect.objectContaining({ id: saved[0].id, title: '회원 추가 오류', answer: null, answeredAt: null })]);
+    expect(before[0]).not.toHaveProperty('userAgent');
+    await app.get<Repository<Inquiry>>(getRepositoryToken(Inquiry)).update({ id: saved[0].id }, { answer: '고쳤어요', answeredAt: new Date() });
+    const after = (await trainer.get('/api/v1/inquiries').expect(200)).body;
+    expect(after[0]).toMatchObject({ answer: '고쳤어요', answeredAt: expect.any(String) });
+
+    // 다른 트레이너의 문의는 안 보임
+    const other = request.agent(app.getHttpServer());
+    await other.post('/api/auth/signup').send({ loginId: `${loginId}b`, password: 'password1234', name: '김철수' }).expect(201);
+    expect((await other.get('/api/v1/inquiries').expect(200)).body).toEqual([]);
   });
 });

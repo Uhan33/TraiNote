@@ -10,6 +10,11 @@ export class InquiryRepository extends BaseRepository<Inquiry> {
     super(repository);
   }
 
+  // 최신순 — 문의 내역
+  listByTrainer(trainerId: string) {
+    return this.find({ where: { trainerId }, order: { createdAt: 'DESC' } });
+  }
+
   add(data: Pick<Inquiry, 'trainerId' | 'category' | 'title' | 'content' | 'contact' | 'userAgent' | 'appVersion'>) {
     return this.insertOne(data);
   }

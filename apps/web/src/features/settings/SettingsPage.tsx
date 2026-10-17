@@ -1,4 +1,4 @@
-import { ChevronRight, LogOut, MessageSquare } from 'lucide-react'
+import { ChevronRight, History, LogOut, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuthMe } from '@/api/generated'
@@ -25,6 +25,10 @@ export default function SettingsPage() {
         </div>
         <Link to="/settings/inquiry" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
           <MessageSquare className="size-5 text-muted-foreground" /> 문의하기
+          <ChevronRight className="ml-auto size-5 text-muted-foreground" />
+        </Link>
+        <Link to="/settings/inquiries" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
+          <History className="size-5 text-muted-foreground" /> 문의 내역
           <ChevronRight className="ml-auto size-5 text-muted-foreground" />
         </Link>
         <button type="button" onClick={logout} className="flex h-14 w-full items-center gap-3 px-4 text-left text-destructive active:bg-muted">
