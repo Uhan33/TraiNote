@@ -1,7 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, Plus, Send } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
@@ -9,9 +8,8 @@ import { getMembersListQueryKey, useMembersCreate, type MemberDto } from '@/api/
 import { PtInput } from './pt'
 import { useInvite } from './useInvite'
 
-// 회원 추가 후 그 회원의 오늘 일지로 이동하고, 같은 창에서 바로 초대 보내기 단계로 전환
-export default function AddMemberButton({ date }: { date: string }) {
-  const navigate = useNavigate()
+// 회원 추가 후 같은 창에서 초대 보내기 단계로 전환. 닫으면 회원 목록 그대로 — 처음엔 여러 명을 연달아 등록하므로 일지로 이동하지 않음
+export default function AddMemberButton() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [memo, setMemo] = useState('')
@@ -31,34 +29,29 @@ export default function AddMemberButton({ date }: { date: string }) {
         onSuccess: async (member) => {
           await queryClient.invalidateQueries({ queryKey: getMembersListQueryKey() })
           setAdded(member)
-          setName('')
-          setMemo('')
-          setPt('')
-          navigate(`/workouts/${member.code}?date=${date}`)
         },
       },
     )
   }
 
+  // 열 때마다 빈 입력칸으로 시작. 닫을 때 비우면 닫히는 애니메이션 중에 내용이 바뀌어 보이고,
+  // "나중에 할게요"처럼 코드로 닫으면 onOpenChange 가 호출되지 않아 이전 회원의 초대 화면이 남음
+  const openBlank = () => {
+    setName('')
+    setMemo('')
+    setPt('')
+    setAdded(null)
+    create.reset()
+    setOpen(true)
+  }
+
   return (
     <>
-      <Button variant="secondary" className="h-10 rounded-full px-4" onClick={() => setOpen(true)}>
+      <Button variant="secondary" className="h-10 rounded-full px-4" onClick={openBlank}>
         <Plus /> 회원 추가
       </Button>
 
-      <Drawer
-        open={open}
-        onOpenChange={(o) => {
-          setOpen(o)
-          if (!o) {
-            setName('')
-            setMemo('')
-            setPt('')
-            setAdded(null)
-            create.reset()
-          }
-        }}
-      >
+      <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent className="mx-auto max-w-md">
           <DrawerHeader>
             <DrawerTitle>{added ? `${added.name}님을 추가했어요` : '회원 추가'}</DrawerTitle>

@@ -26,7 +26,7 @@ export default function WorkoutListPage() {
     <div className="flex flex-1 flex-col">
       <header className="flex items-center justify-between px-5 pt-6">
         <h1 className="text-2xl font-bold">운동일지</h1>
-        <AddMemberButton date={date} />
+        <AddMemberButton />
       </header>
 
       <div className="px-3 pt-3">
