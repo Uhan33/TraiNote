@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useMembersReissue, useMembersRemove, useMembersUpdate, type MemberDto } from '@/api/generated'
 import { MemberFields } from './AddMemberButton'
+import { useInvite } from './useInvite'
 
 type Mode = 'menu' | 'edit' | 'reissue' | 'delete'
 
-// 회원 초대 문구 복사 · 정보(이름·메모) 수정 · 코드 재발급 · 삭제(연결 해제). 재발급·삭제는 확인 단계를 한 번 더 거침
+// 회원 초대 보내기 · 정보(이름·메모) 수정 · 코드 재발급 · 삭제(연결 해제). 재발급·삭제는 확인 단계를 한 번 더 거침
 export default function MemberMenu({ member, date }: { member: MemberDto; date: string }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -17,7 +18,7 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
   const [mode, setMode] = useState<Mode>('menu')
   const [name, setName] = useState(member.name)
   const [memo, setMemo] = useState(member.memo)
-  const [copied, setCopied] = useState(false)
+  const invite = useInvite(member)
   const update = useMembersUpdate<Error>()
   const remove = useMembersRemove<Error>()
   const reissue = useMembersReissue<Error>()
@@ -51,17 +52,11 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
             <div className="flex flex-col px-4 pb-8">
               <button
                 type="button"
-                onClick={async () => {
-                  // 회원에게 카톡 등으로 보낼 안내 — 주소에 코드를 넣지 않고 따로 입력하게 함
-                  const text = `[TraiNote] ${member.name}님 운동일지\n${window.location.origin}/member\n회원 코드: ${member.code}`
-                  await navigator.clipboard.writeText(text).catch(() => {})
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 1500)
-                }}
+                onClick={invite.send}
                 className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted"
               >
-                {copied ? <Check className="size-5 text-muted-foreground" /> : <Send className="size-5 text-muted-foreground" />}
-                {copied ? '복사했어요 · 회원에게 보내 주세요' : '회원 초대 문구 복사'}
+                {invite.copied ? <Check className="size-5 text-muted-foreground" /> : <Send className="size-5 text-muted-foreground" />}
+                {invite.copied ? '복사했어요 · 회원에게 보내 주세요' : '회원 초대 보내기'}
               </button>
               <button type="button" onClick={() => setMode('edit')} className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted">
                 <Pencil className="size-5 text-muted-foreground" /> 회원 정보 수정

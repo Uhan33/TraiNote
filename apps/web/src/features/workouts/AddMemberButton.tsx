@@ -1,13 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
+import { Check, Plus, Send } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
-import { getMembersListQueryKey, useMembersCreate } from '@/api/generated'
+import { getMembersListQueryKey, useMembersCreate, type MemberDto } from '@/api/generated'
+import { useInvite } from './useInvite'
 
-// 회원 추가 후 바로 그 회원의 오늘 일지로 이동
+// 회원 추가 후 그 회원의 오늘 일지로 이동하고, 같은 창에서 바로 초대 보내기 단계로 전환
 export default function AddMemberButton({ date }: { date: string }) {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -16,6 +17,8 @@ export default function AddMemberButton({ date }: { date: string }) {
   const trimmed = name.trim()
   const queryClient = useQueryClient()
   const create = useMembersCreate<Error>()
+  const [added, setAdded] = useState<MemberDto | null>(null)
+  const invite = useInvite(added)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +28,7 @@ export default function AddMemberButton({ date }: { date: string }) {
       {
         onSuccess: async (member) => {
           await queryClient.invalidateQueries({ queryKey: getMembersListQueryKey() })
-          setOpen(false)
+          setAdded(member)
           setName('')
           setMemo('')
           navigate(`/workouts/${member.code}?date=${date}`)
@@ -47,14 +50,32 @@ export default function AddMemberButton({ date }: { date: string }) {
           if (!o) {
             setName('')
             setMemo('')
+            setAdded(null)
             create.reset()
           }
         }}
       >
         <DrawerContent className="mx-auto max-w-md">
           <DrawerHeader>
-            <DrawerTitle>회원 추가</DrawerTitle>
+            <DrawerTitle>{added ? `${added.name}님을 추가했어요` : '회원 추가'}</DrawerTitle>
           </DrawerHeader>
+          {added ? (
+            <div className="flex flex-col gap-4 px-4 pb-8">
+              <p className="text-sm text-muted-foreground">초대를 보내면 회원이 가입 없이 코드로 들어와 운동 기록을 볼 수 있어요.</p>
+              <div className="rounded-xl bg-muted p-4 text-center">
+                <p className="text-sm text-muted-foreground">회원 코드</p>
+                <p className="mt-1 font-mono text-2xl font-semibold tracking-[0.2em]">{added.code}</p>
+              </div>
+              <Button className="h-12 rounded-xl text-base" onClick={invite.send}>
+                {invite.copied ? <Check /> : <Send />}
+                {invite.copied ? '복사했어요 · 회원에게 보내 주세요' : '초대 보내기'}
+              </Button>
+              <Button variant="ghost" className="h-12 rounded-xl text-base" onClick={() => setOpen(false)}>
+                나중에 할게요
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">나중에 일지 화면 오른쪽 위 ⋯ 메뉴에서도 보낼 수 있어요</p>
+            </div>
+          ) : (
           <form onSubmit={submit} className="flex flex-col gap-4 px-4 pb-8">
             <MemberFields name={name} memo={memo} onName={setName} onMemo={setMemo} autoFocus />
             <p className="text-sm text-muted-foreground">회원 ID(6자리)는 자동으로 만들어져요</p>
@@ -63,6 +84,7 @@ export default function AddMemberButton({ date }: { date: string }) {
               추가
             </Button>
           </form>
+          )}
         </DrawerContent>
       </Drawer>
     </>
