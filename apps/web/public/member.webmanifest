@@ -1,0 +1,16 @@
+{
+  "name": "TraiNote 회원",
+  "short_name": "TraiNote",
+  "lang": "ko",
+  "id": "/member",
+  "start_url": "/member",
+  "scope": "/member",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

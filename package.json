@@ -1,0 +1,22 @@
+{
+  "name": "trainote",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.11.2",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.22.0",
+      "onFail": "download"
+    }
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:phone": "LAN=1 pnpm -r --parallel dev",
+    "preview:phone": "pnpm --filter web build && LAN=1 pnpm --parallel --filter api --filter web run serve",
+    "build": "pnpm -r build",
+    "deploy:prod": "ssh trainote '~/trainote/deploy/deploy.sh'",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
+  }
+}
