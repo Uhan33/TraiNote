@@ -63,7 +63,7 @@ export default function AppShell({
       <nav
         className={`fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden ${inDetail ? 'hidden md:block' : ''}`}
       >
-        <ul className="mx-auto grid h-16 max-w-md grid-cols-5">
+        <ul className="mx-auto grid h-16 max-w-md grid-flow-col auto-cols-fr">
           {tabs.map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <NavLink
