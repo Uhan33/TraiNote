@@ -46,9 +46,22 @@ pnpm --filter api migration:revert                                    # 마지�
 - `src/libs/` 의 다른 인프라 모듈(redis·mailer 등)은 필요할 때 같은 위치에 추가
 - 주입받는 필드 이름은 **클래스 이름의 camelCase** — `memberRepository: MemberRepository`, `membersService: MembersService`, `jwtService: JwtService` (역할이 이름에 드러나게)
 
+## 배포 (운영 서버)
+
+AWS EC2 1대 (서울, t4g.small) 에서 Docker Compose 로 `web`(Caddy: https·정적 파일·/api 프록시) · `api`(NestJS) · `postgres` 실행. 설정은 `deploy/`.
+
+```bash
+pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드·교체 (ssh trainote 설정 필요)
+```
+
+- 서버 경로 `~/trainote` (GitHub 저장소 clone), 비밀 값은 서버의 `deploy/.env` (`deploy/.env.example` 참고, 커밋 금지)
+- api 컨테이너가 시작할 때 마이그레이션을 먼저 실행
+- 로그: `ssh trainote 'cd trainote && docker compose -f deploy/docker-compose.yml logs -f api'`
+- DB 접속: `ssh trainote 'cd trainote && docker compose -f deploy/docker-compose.yml exec postgres psql -U trainote'`
+
 ## 문의 확인 (운영)
 
-트레이너가 내 정보 > 문의하기로 보낸 문의는 `inquiry` 테이블에 쌓인다 (답변 화면은 admin 생길 때).
+트레이너가 내 정보 > 문의하기로 보낸 문의는 `inquiry` 테이블에 쌓인다 (답변 화면은 admin 생길 때). 위 DB 접속 후 실행.
 
 ```sql
 select i.created_at, t.login_id, t.name, i.category, i.title, i.content, i.contact, i.app_version, i.user_agent

@@ -1,12 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { setupApp } from './app.setup.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // 배포 시 앞단 프록시(Caddy) 1단 뒤 — 요청 IP 를 X-Forwarded-For 에서 읽음 (요청 횟수 제한이 사용자 IP 기준으로 동작)
+  app.set('trust proxy', 1);
   setupApp(app);
   app.enableCors({ origin: process.env.CORS_ORIGIN?.split(',') ?? 'http://localhost:5173', credentials: true });
 

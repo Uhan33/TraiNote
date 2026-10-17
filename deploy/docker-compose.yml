@@ -1,0 +1,58 @@
+# 운영 서버용. 실행: deploy/deploy.sh (서버에서) — 설정 값은 deploy/.env
+name: trainote
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: trainote
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?deploy/.env 에 POSTGRES_PASSWORD 필요}
+      POSTGRES_DB: trainote
+    # 2GB 서버에 맞춘 메모리 설정
+    command: postgres -c shared_buffers=128MB -c effective_cache_size=512MB -c work_mem=4MB -c max_connections=30
+    volumes:
+      # Postgres 18 부터 데이터 경로가 /var/lib/postgresql/<버전>/... 로 바뀌어 상위 폴더를 마운트
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U trainote -d trainote']
+      interval: 5s
+      retries: 10
+    # 포트를 외부에 열지 않음 — api 만 내부 네트워크로 접속
+
+  api:
+    build: { context: .., target: api }
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgres://trainote:${POSTGRES_PASSWORD}@postgres:5432/trainote
+      JWT_SECRET: ${JWT_SECRET:?deploy/.env 에 JWT_SECRET 필요}
+      CORS_ORIGIN: https://${DOMAIN}
+      COOKIE_DOMAIN: ''
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/api/health || exit 1']
+      interval: 10s
+      start_period: 20s
+
+  web:
+    build: { context: .., target: web }
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?deploy/.env 에 DOMAIN 필요}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddy_data:/data # 발급받은 인증서 — 지우면 재발급
+      - caddy_config:/config
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
