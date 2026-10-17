@@ -5,6 +5,7 @@ node_modules/
 dist/
 build/
 dev-dist/
+.migrate/
 *.tsbuildinfo
 
 # env (.env.example 만 커밋)
