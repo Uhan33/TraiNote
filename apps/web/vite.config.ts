@@ -13,7 +13,8 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
   // 배포와 같은 구조(같은 출처 /api)로 개발 — 쿠키·경로 동작이 운영과 동일
-  server: { proxy: { '/api': 'http://localhost:4000' } },
+  // LAN=1 이면 같은 와이파이의 폰에서 접속 가능 (pnpm dev:phone). API 는 이 서버가 프록시하므로 따로 열 필요 없음
+  server: { host: process.env.LAN === '1', proxy: { '/api': 'http://localhost:4000' } },
   preview: { proxy: { '/api': 'http://localhost:4000' } },
   plugins: [
     react(),

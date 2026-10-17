@@ -19,6 +19,7 @@ cp apps/api/.env.example apps/api/.env
 docker compose up -d                  # 로컬 Postgres 18 (:5432)
 pnpm --filter api migration:run       # 테이블 생성
 pnpm dev                       # api :4000, web :5173 동시 실행
+pnpm dev:phone                 # 위와 같고 같은 와이파이의 폰에서 http://<맥 IP>:5173 접속 가능
 pnpm --filter web gen:api      # api 실행 중일 때 API 클라이언트 생성 → apps/web/src/api/generated.ts
 ```
 

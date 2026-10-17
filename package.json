@@ -12,6 +12,7 @@
   },
   "scripts": {
     "dev": "pnpm -r --parallel dev",
+    "dev:phone": "LAN=1 pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test"

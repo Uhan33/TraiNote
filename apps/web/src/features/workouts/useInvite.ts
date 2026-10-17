@@ -14,7 +14,8 @@ export function useInvite(member: Pick<MemberDto, 'name' | 'code'> | null) {
       await navigator.share({ text }).catch(() => {})
       return
     }
-    await navigator.clipboard.writeText(text).catch(() => {})
+    // 공유·클립보드 모두 https(또는 localhost)에서만 동작 — 폰에서 http://<맥 IP> 로 테스트하면 아무 일도 없음
+    if (!(await navigator.clipboard?.writeText(text).then(() => true, () => false))) return
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
