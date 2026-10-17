@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Member } from '../libs/database/entities/member.entity.js';
 import { MemberRepository } from '../libs/database/repositories/member.repository.js';
 import { MembersService } from '../members/members.service.js';
+import { FailureLimiter } from '../libs/security/failure-limiter.js';
 import { WorkoutLogRepository } from '../libs/database/repositories/workout-log.repository.js';
 import { assertDate } from '../workouts/workouts.service.js';
 import type { MemberViewDto, MemberViewWorkoutDto } from './dto.js';
@@ -20,10 +21,21 @@ export class MemberViewService {
     private readonly jwtService: JwtService,
   ) {}
 
+  // 전체(모든 IP 합산) 코드 실패 제한: 1분에 MEMBER_CODE_FAIL_LIMIT(기본 30)번 틀리면 1분간 코드 입장 중지
+  // 여러 IP 로 코드를 무작위 대입하는 공격 차단 — 이미 입장한 회원(토큰 1년)은 영향 없음
+  private readonly codeFailures = new FailureLimiter(Number(process.env.MEMBER_CODE_FAIL_LIMIT) || 30, 60_000, 60_000);
+  private readonly logger = new Logger('Security');
+
   // 코드 → 회원 토큰. 없는 코드·삭제된 회원 같은 응답 (존재 여부 노출 안 함)
   async createSession(code: string) {
+    if (this.codeFailures.isLocked('all')) {
+      throw new HttpException('잠시 후 다시 시도해 주세요', HttpStatus.TOO_MANY_REQUESTS);
+    }
     const member = await this.memberRepository.findByCode(code);
-    if (!member) throw new UnauthorizedException('회원 코드가 올바르지 않아요');
+    if (!member) {
+      if (this.codeFailures.fail('all')) this.logger.warn({ event: 'member_code_locked' });
+      throw new UnauthorizedException('회원 코드가 올바르지 않아요');
+    }
     const payload: MemberTokenPayload = { sub: member.id, typ: 'member', cia: member.codeIssuedAt.getTime() };
     return this.jwtService.signAsync(payload, { expiresIn: `${MEMBER_SESSION_DAYS}d` });
   }
