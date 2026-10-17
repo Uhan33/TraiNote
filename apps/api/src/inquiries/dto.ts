@@ -15,6 +15,23 @@ export class InquiryDto {
   @ApiProperty({ type: String, nullable: true }) answeredAt: string | null;
 }
 
+// 운영자 문의 관리용 — 보낸 트레이너·연락처·기기 정보 포함
+export class AdminInquiryDto extends InquiryDto {
+  @ApiProperty() trainerLoginId: string;
+  @ApiProperty() trainerName: string;
+  @ApiProperty() contact: string;
+  @ApiProperty() userAgent: string;
+  @ApiProperty() appVersion: string;
+}
+
+export class AnswerInquiryDto {
+  @ApiProperty({ example: '확인해서 고쳤어요. 새로고침하면 반영돼요.' })
+  @Transform(trim)
+  @IsString()
+  @Length(1, 5000, { message: '답변은 1~5000자로 입력하세요' })
+  answer: string;
+}
+
 export class CreateInquiryDto {
   @ApiProperty({ enum: INQUIRY_CATEGORIES, description: 'usage 사용 방법 · bug 오류 신고 · feature 기능 제안 · etc 기타' })
   @IsIn(INQUIRY_CATEGORIES, { message: '문의 유형을 선택하세요' })

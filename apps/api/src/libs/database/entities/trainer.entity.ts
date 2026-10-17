@@ -1,6 +1,10 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Check, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+
+export const TRAINER_ROLES = ['trainer', 'admin'] as const;
+export type TrainerRole = (typeof TRAINER_ROLES)[number];
 
 @Entity('trainer')
+@Check('CHK_trainer_role', `"role" IN ('trainer', 'admin')`)
 export class Trainer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -19,6 +23,10 @@ export class Trainer {
 
   @Column({ type: 'varchar', length: 50 })
   name: string;
+
+  // 권한. admin = 운영자(문의 관리 등) — API 로는 바꿀 수 없고 DB 에서만 지정 (README 운영자 지정)
+  @Column({ type: 'varchar', length: 20, default: 'trainer' })
+  role: TrainerRole;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

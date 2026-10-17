@@ -68,7 +68,19 @@ pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드
 
 ## 문의 확인 (운영)
 
-트레이너가 내 정보 > 문의하기로 보낸 문의는 `inquiry` 테이블에 쌓인다 (답변 화면은 admin 생길 때). 위 DB 접속 후 실행.
+트레이너가 내 정보 > 문의하기로 보낸 문의는 `inquiry` 테이블에 쌓인다.
+**운영자 계정은 앱의 내 정보 > 문의 관리에서 확인·답변** (답변은 트레이너의 문의 내역에 바로 표시).
+
+### 운영자 지정·해제
+권한은 API 로 바꿀 수 없고 DB 에서만 지정한다 (매 요청 DB 확인 — 해제하면 즉시 반영). 위 DB 접속 후:
+
+```sql
+update trainer set role = 'admin' where login_id = '<내 아이디>';    -- 지정
+update trainer set role = 'trainer' where login_id = '<아이디>';     -- 해제
+select login_id, name from trainer where role = 'admin';            -- 확인
+```
+
+### SQL 로 직접 확인·답변 (화면 대신)
 
 ```sql
 -- 답변 대기 문의

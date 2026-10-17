@@ -17,6 +17,7 @@ import MemberHomeworkPage from '@/features/member-view/MemberHomeworkPage'
 import MemberLayout from '@/features/member-view/MemberLayout'
 import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
 import MemberWorkoutsPage from '@/features/member-view/MemberWorkoutsPage'
+import AdminInquiriesPage from '@/features/settings/AdminInquiriesPage'
 import InquiriesPage from '@/features/settings/InquiriesPage'
 import InquiryPage from '@/features/settings/InquiryPage'
 import SettingsPage from '@/features/settings/SettingsPage'
@@ -63,6 +64,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="settings/inquiry" element={<InquiryPage />} />
                 <Route path="settings/inquiries" element={<InquiriesPage />} />
+                <Route path="settings/admin/inquiries" element={<AdminInquiriesPage />} />
               </Route>
             </Route>
           </Routes>

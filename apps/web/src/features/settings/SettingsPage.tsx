@@ -1,4 +1,4 @@
-import { ChevronRight, History, LogOut, MessageSquare } from 'lucide-react'
+import { ChevronRight, History, Inbox, LogOut, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuthMe } from '@/api/generated'
@@ -17,6 +17,16 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">아이디 {me.data?.loginId}</p>
         {me.data?.email && <p className="text-sm text-muted-foreground">{me.data.email}</p>}
       </section>
+
+      {/* 운영자(trainer.role = admin)에게만 보이는 메뉴 — 실제 권한 확인은 서버 */}
+      {me.data?.role === 'admin' && (
+        <section className="mt-4 rounded-2xl border">
+          <Link to="/settings/admin/inquiries" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
+            <Inbox className="size-5 text-muted-foreground" /> 문의 관리 <span className="text-xs text-muted-foreground">운영자</span>
+            <ChevronRight className="ml-auto size-5 text-muted-foreground" />
+          </Link>
+        </section>
+      )}
 
       <section className="mt-4 divide-y rounded-2xl border">
         <div className="flex h-14 items-center justify-between px-4">
