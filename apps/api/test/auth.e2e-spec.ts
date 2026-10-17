@@ -45,14 +45,16 @@ describe('auth (e2e)', () => {
     const http = request(app.getHttpServer());
     const signup = await http
       .post('/api/auth/signup')
-      .send({ loginId, email: `${loginId}@example.com`, password: 'password1234', name: '테스트' })
+      // role 을 보내도 무시 — 운영자 권한은 DB 에서만 지정
+      .send({ loginId, email: `${loginId}@example.com`, password: 'password1234', name: '테스트', role: 'admin' })
       .expect(201);
     trainerId = (signup.body as { id: string }).id;
+    expect(signup.body).toMatchObject({ role: 'trainer' });
     const access = cookie(signup, 'trainote_access')!;
     const refresh1 = cookie(signup, 'trainote_refresh')!;
     expect(access && refresh1).toBeTruthy();
 
-    await http.get('/api/auth/me').set('Cookie', access).expect(200);
+    expect((await http.get('/api/auth/me').set('Cookie', access).expect(200)).body).toMatchObject({ role: 'trainer' });
 
     // 교체: 새 리프레시 토큰 발급
     const rotated = await http.post('/api/auth/refresh').set('Cookie', refresh1).expect(204);

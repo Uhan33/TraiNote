@@ -48,4 +48,5 @@ export class TrainerDto {
   @ApiProperty() loginId: string;
   @ApiProperty({ type: String, nullable: true }) email: string | null;
   @ApiProperty() name: string;
+  @ApiProperty({ enum: ['trainer', 'admin'], description: 'admin = 운영자 메뉴 표시' }) role: 'trainer' | 'admin';
 }

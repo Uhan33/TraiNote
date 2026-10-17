@@ -8,7 +8,7 @@ import { hashPassword, verifyPassword } from './password.js';
 // 존재하지 않는 아이디도 해시 비교 시간을 들여 아이디 존재 여부가 응답 시간으로 드러나지 않게 함
 const DUMMY_HASH = await hashPassword('dummy-password-for-timing');
 
-const toDto = ({ id, loginId, email, name }: Trainer): TrainerDto => ({ id, loginId, email, name });
+const toDto = ({ id, loginId, email, name, role }: Trainer): TrainerDto => ({ id, loginId, email, name, role });
 
 @Injectable()
 export class AuthService {
