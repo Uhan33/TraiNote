@@ -31,6 +31,18 @@ export default function BodyDetailPage() {
   const fatOk = !fat.trim() || (fatPct !== null && fatPct >= 1 && fatPct <= 75)
   const muscleOk = !muscle.trim() || (muscleKg !== null && muscleKg >= 5 && muscleKg <= 100)
   const valid = weightOk && fatOk && muscleOk
+  // 저장할 값 (서버와 같은 자릿수로 반올림)
+  const values = {
+    weightKg: weightKg === null ? null : round(weightKg, 2),
+    bodyFatPct: fatPct === null ? null : round(fatPct, 1),
+    skeletalMuscleKg: muscleKg === null ? null : round(muscleKg, 2),
+  }
+  // 이미 기록이 있는 날짜는 값이 바뀌었을 때만 저장 가능
+  const changed =
+    !existing ||
+    values.weightKg !== existing.weightKg ||
+    values.bodyFatPct !== existing.bodyFatPct ||
+    values.skeletalMuscleKg !== existing.skeletalMuscleKg
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: getBodyListQueryKey(code) })
   const fill = (r?: BodyRecordDto) => {
@@ -75,9 +87,9 @@ export default function BodyDetailPage() {
           className="flex flex-col gap-3 rounded-2xl border p-4"
           onSubmit={(e) => {
             e.preventDefault()
-            if (!valid) return
+            if (!valid || !changed) return
             save.mutate(
-              { code, date, data: { weightKg: round(weightKg!, 2), bodyFatPct: fatPct === null ? null : round(fatPct, 1), skeletalMuscleKg: muscleKg === null ? null : round(muscleKg, 2) } },
+              { code, date, data: { ...values, weightKg: values.weightKg! } },
               { onSuccess: () => void refresh().then(refill) },
             )
           }}
@@ -116,7 +128,7 @@ export default function BodyDetailPage() {
                 삭제
               </Button>
             )}
-            <Button type="submit" className="h-11 flex-[2] rounded-xl text-base" disabled={!valid || save.isPending}>
+            <Button type="submit" className="h-11 flex-[2] rounded-xl text-base" disabled={!valid || !changed || save.isPending}>
               저장
             </Button>
           </div>
