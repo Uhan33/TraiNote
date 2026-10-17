@@ -17,6 +17,11 @@ const accessCookie = (): CookieOptions => ({ ...baseCookie(), path: '/' });
 // 리프레시 토큰은 인증 API 에만 전송
 const refreshCookie = (): CookieOptions => ({ ...baseCookie(), path: '/api/auth' });
 
+// 가입·로그인은 AuthGuard 를 거치지 않으므로 요청 로그(request-log)에 트레이너 ID 를 직접 표시
+const markTrainer = (res: Response, trainerId: string) => {
+  (res.req as Request & { trainerId?: string }).trainerId = trainerId;
+};
+
 @ApiTags('auth')
 // 버전 없음(/api/auth) — 리프레시 쿠키 경로가 API 버전과 무관하게 유지되도록
 @Controller({ path: 'auth', version: VERSION_NEUTRAL })
@@ -34,6 +39,7 @@ export class AuthController {
   async signup(@Body() dto: SignupDto, @Res({ passthrough: true }) res: Response) {
     const trainer = await this.authService.signup(dto);
     this.setCookies(res, await this.tokensService.issue(trainer.id));
+    markTrainer(res, trainer.id);
     return trainer;
   }
 
@@ -44,6 +50,7 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const trainer = await this.authService.login(dto);
     this.setCookies(res, await this.tokensService.issue(trainer.id));
+    markTrainer(res, trainer.id);
     return trainer;
   }
 
