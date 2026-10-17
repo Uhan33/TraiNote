@@ -38,10 +38,15 @@ export default function BodyDetailPage() {
     setFat(r?.bodyFatPct?.toString() ?? '')
     setMuscle(r?.skeletalMuscleKg?.toString() ?? '')
   }
-  const reset = () => {
-    setDate(todayKey())
-    fill()
+  // 날짜가 바뀌거나 기록을 처음 불러오면 입력칸을 그 날짜 기록으로 채움(없으면 비움)
+  // — 이미 기록한 날짜에 체지방률만 추가하거나, 다른 날짜로 넘어갈 때 이전 입력이 남지 않게
+  const [filledFor, setFilledFor] = useState<string | null>(null)
+  if (records.data && filledFor !== date) {
+    setFilledFor(date)
+    fill(existing)
   }
+  // 저장·삭제 후 날짜는 그대로 두고, 서버에 반영된 값으로 다시 채움 (삭제했으면 빈칸)
+  const refill = () => setFilledFor(null)
 
   if (members.isSuccess && !member) return <p className="py-16 text-center text-muted-foreground">회원을 찾을 수 없어요</p>
 
@@ -73,7 +78,7 @@ export default function BodyDetailPage() {
             if (!valid) return
             save.mutate(
               { code, date, data: { weightKg: round(weightKg!, 2), bodyFatPct: fatPct === null ? null : round(fatPct, 1), skeletalMuscleKg: muscleKg === null ? null : round(muscleKg, 2) } },
-              { onSuccess: () => void refresh().then(reset) },
+              { onSuccess: () => void refresh().then(refill) },
             )
           }}
         >
@@ -88,7 +93,7 @@ export default function BodyDetailPage() {
               // iOS Safari 날짜 입력은 기본 모양이 높이·최소 너비를 무시해 옆 칸과 겹침 → 기본 모양 제거
               className="h-11 min-w-0 appearance-none text-base md:text-base [&::-webkit-date-and-time-value]:text-left"
             />
-            <UnitInput label="체중" unit="kg" value={weight} onChange={setWeight} placeholder={existing ? String(existing.weightKg) : '0.0'} />
+            <UnitInput label="체중" unit="kg" value={weight} onChange={setWeight} placeholder="0.0" />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <UnitInput label="체지방률 (선택)" unit="%" value={fat} onChange={setFat} placeholder="체지방률" />
@@ -106,7 +111,7 @@ export default function BodyDetailPage() {
                 variant="destructive"
                 className="h-11 flex-1 rounded-xl"
                 disabled={remove.isPending}
-                onClick={() => remove.mutate({ code, date }, { onSuccess: () => void refresh().then(reset) })}
+                onClick={() => remove.mutate({ code, date }, { onSuccess: () => void refresh().then(refill) })}
               >
                 삭제
               </Button>
@@ -128,10 +133,7 @@ export default function BodyDetailPage() {
                   <li key={r.date}>
                     <button
                       type="button"
-                      onClick={() => {
-                        setDate(r.date)
-                        fill(r)
-                      }}
+                      onClick={() => setDate(r.date)}
                       className={`flex min-h-12 w-full items-center justify-between px-4 py-2 text-left active:bg-muted ${r.date === date ? 'bg-muted' : ''}`}
                     >
                       <span className="flex flex-col">
