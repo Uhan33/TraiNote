@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a && . deploy/.env && set +a
+# 실패하면 알림 메일 (조용히 백업이 멈추지 않게)
+trap 'deploy/alert.sh "DB 백업 실패" "$(date "+%F %T") deploy/backup.sh 실패 — ~/backup.log 확인"' ERR
 
 key="daily/trainote-$(date +%Y%m%d-%H%M).dump"
 # pg_dump -Fc: 압축된 덤프 (복원: pg_restore). 실패하면 pipefail 로 스크립트도 실패
