@@ -81,7 +81,7 @@ export default function AddMemberButton({ date }: { date: string }) {
             </div>
           ) : (
           <form onSubmit={submit} className="flex flex-col gap-4 px-4 pb-8">
-            <MemberFields name={name} memo={memo} onName={setName} onMemo={setMemo} autoFocus />
+            <MemberFields name={name} memo={memo} onName={setName} onMemo={setMemo} />
             <div className="flex flex-col gap-2">
               <span className="text-sm font-medium">
                 남은 PT 횟수 <span className="font-normal text-muted-foreground">(선택 · 일지를 쓸 때마다 1회씩 차감)</span>
@@ -101,26 +101,23 @@ export default function AddMemberButton({ date }: { date: string }) {
   )
 }
 
-// 회원 추가·수정 공용 입력칸
+// 회원 추가·수정 공용 입력칸 — 하단 창 안이라 자동 포커스 없음 (창이 올라오는 중에 키보드가 뜨면 폰 화면이 입력칸을 놓침)
 export function MemberFields({
   name,
   memo,
   onName,
   onMemo,
-  autoFocus,
 }: {
   name: string
   memo: string
   onName: (v: string) => void
   onMemo: (v: string) => void
-  autoFocus?: boolean
 }) {
   return (
     <>
       <label className="flex flex-col gap-2">
         <span className="text-sm font-medium">이름</span>
         <Input
-          autoFocus={autoFocus}
           value={name}
           onChange={(e) => onName(e.target.value)}
           maxLength={20}

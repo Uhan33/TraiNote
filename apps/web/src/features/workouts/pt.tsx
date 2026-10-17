@@ -1,13 +1,12 @@
 import { Input } from '@/components/ui/input'
 
 // 숫자 입력 + 재등록 빠른 추가(+10/+20/+30). 빈 값 = 횟수 관리 안 함
-export function PtInput({ value, onChange, autoFocus }: { value: string; onChange: (v: string) => void; autoFocus?: boolean }) {
+export function PtInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const add = (n: number) => onChange(String(Math.min(999, Math.max(0, Number(value || 0)) + n)))
   return (
     <div className="flex flex-col gap-2">
       <div className="relative">
         <Input
-          autoFocus={autoFocus}
           inputMode="numeric"
           value={value}
           onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 3))}

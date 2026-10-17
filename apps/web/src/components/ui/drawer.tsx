@@ -2,10 +2,13 @@ import * as React from "react"
 import { cn } from "cn"
 import { Drawer as DrawerPrimitive } from "vaul"
 
+// repositionInputs: vaul 이 키보드 높이만큼 창을 올리는데, 폰 브라우저도 입력칸이 보이게 화면을 올려
+// 두 번 올라가 입력칸이 화면 위로 사라짐 → 끄고 브라우저 기본 동작에 맡김
 function Drawer({
+  repositionInputs = false,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  return <DrawerPrimitive.Root data-slot="drawer" repositionInputs={repositionInputs} {...props} />
 }
 
 function DrawerTrigger({

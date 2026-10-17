@@ -114,7 +114,7 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
                 지금부터 남은 횟수를 입력하세요. 이후 운동일지를 새로 쓸 때마다 1회씩 줄어요. 재등록은 +버튼으로 더하고, 노쇼 차감은 숫자를 직접
                 고쳐 주세요.
               </p>
-              <PtInput value={pt} onChange={setPtValue} autoFocus />
+              <PtInput value={pt} onChange={setPtValue} />
               {setPt.error && <p className="text-sm text-destructive">{setPt.error.message}</p>}
               <Button type="submit" className="h-12 rounded-xl text-base" disabled={setPt.isPending}>
                 {pt ? '저장' : '횟수 관리 안 함'}
