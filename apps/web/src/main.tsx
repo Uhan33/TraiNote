@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import { BrowserRouter, Route, Routes } from 'react-router'
 import './index.css'
 import AppLayout, { ComingSoon } from '@/components/AppLayout'
 import BodyDetailPage from '@/features/body/BodyDetailPage'
@@ -9,6 +9,7 @@ import BodyPage from '@/features/body/BodyPage'
 import LoginPage from '@/features/auth/LoginPage'
 import RequireAuth, { GuestOnly } from '@/features/auth/RequireAuth'
 import SignupPage from '@/features/auth/SignupPage'
+import LandingPage from '@/features/landing/LandingPage'
 import MemberBodyPage from '@/features/member-view/MemberBodyPage'
 import MemberEntryPage from '@/features/member-view/MemberEntryPage'
 import MemberHomeworkPage from '@/features/member-view/MemberHomeworkPage'
@@ -27,8 +28,7 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <div className="mx-auto min-h-dvh max-w-md md:max-w-none">
           <Routes>
-            {/* / 는 추후 랜딩페이지 */}
-            <Route index element={<Navigate to="/workouts" replace />} />
+            <Route index element={<LandingPage />} />
             {/* 회원용 화면 — 트레이너 로그인과 무관, 회원 코드 입력 → 회원 토큰 */}
             <Route path="member">
               <Route index element={<MemberEntryPage />} />
