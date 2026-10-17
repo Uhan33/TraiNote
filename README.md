@@ -56,12 +56,16 @@ pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드
 
 - 서버 경로 `~/trainote` (GitHub 저장소 clone), 비밀 값은 서버의 `deploy/.env` (`deploy/.env.example` 참고, 커밋 금지)
 - api 컨테이너가 시작할 때 마이그레이션을 먼저 실행
-- 로그: `ssh trainote 'cd trainote && docker compose -f deploy/docker-compose.yml logs -f api'`
-  - API 요청마다 JSON 1줄: `at`(한국 시간)·`method`·`path`·`status`·`ms`·`ip`·`ua`·`trainerId`/`memberId` (회원 코드는 남기지 않음, `/api/health` 제외)
-  - 특정 트레이너: `... logs api | grep '<trainerId>'`, 오류만: `... logs api | grep '"status":5'`
-  - 보관: 20MB × 10개 (넘으면 오래된 것부터 삭제)
+- **요청 제한** (봇·대입 공격): IP 당 전체 1분 300회 · 로그인/가입/회원 코드 1분 10회 · 문의 1시간 10회
+  - 아이디별 로그인 15분에 10번 실패 → 그 아이디 15분 잠금, 회원 코드 전체(모든 IP 합산) 1분에 30번 실패 → 1분간 코드 입장 중지 (`MEMBER_CODE_FAIL_LIMIT`)
+  - 잠기면 로그에 `login_locked` / `member_code_locked` 경고 — 서버 메모리 기준이라 배포(재시작) 시 초기화
+- **알림 메일** (SNS `trainote-alerts` → typhoid33@naver.com): 백업 실패, 디스크 80% 초과(`deploy/check-disk.sh`, 서버 cron 매시간). 직접 보내기: `deploy/alert.sh "제목" "내용"`
+- 로그: 서버 journald 에 보관 (배포해도 유지, 최대 1GB·30일 — `/etc/systemd/journald.conf.d/trainote.conf`)
+  - API: `ssh trainote 'journalctl -t trainote-api -o cat --since today'` — 요청마다 JSON 1줄: `at`(한국 시간)·`method`·`path`·`status`·`ms`·`ip`·`ua`·`trainerId`/`memberId` (회원 코드는 남기지 않음, `/api/health` 제외)
+  - 웹(Caddy) 접근 로그(모든 요청): `ssh trainote 'journalctl -t trainote-web -o cat --since today'`
+  - 특정 트레이너: `... | grep '<trainerId>'`, 오류만: `... | grep '"status":5'`, 실시간: `-f`
 - **백업**: 매일 04:00 `deploy/backup.sh` 가 DB 덤프를 S3 `trainote-backups-847547470208/daily/` 에 업로드 (30일 보관, 서버는 업로드만 가능)
-  - cron: 서버 `/etc/cron.d/trainote-backup` → 로그 `~/backup.log`
+  - cron: 서버 `/etc/cron.d/trainote-backup` → 로그 `~/backup.log`, 실패 시 알림 메일
   - 복원: 맥에서 `aws s3 cp s3://trainote-backups-847547470208/daily/<파일> . --profile uhan` → 서버로 복사 →
     `docker compose -f deploy/docker-compose.yml exec -T postgres pg_restore -U trainote -d trainote --clean --if-exists < <파일>`
 - DB 접속: `ssh trainote 'cd trainote && docker compose -f deploy/docker-compose.yml exec postgres psql -U trainote'`

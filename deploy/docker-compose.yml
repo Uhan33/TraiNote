@@ -32,10 +32,8 @@ services:
       COOKIE_DOMAIN: ''
     depends_on:
       postgres: { condition: service_healthy }
-    # 요청 로그 보관: 20MB × 10개 (서버 기본값 10MB × 3개보다 길게)
-    logging:
-      driver: json-file
-      options: { max-size: 20m, max-file: '10' }
+    # 로그는 서버 journald 로 — 배포로 컨테이너가 바뀌어도 유지, 용량·기간 상한은 journald 설정 (README 배포)
+    logging: { driver: journald, options: { tag: trainote-api } }
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/api/health || exit 1']
       interval: 10s
@@ -46,6 +44,7 @@ services:
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:?deploy/.env 에 DOMAIN 필요}
+    logging: { driver: journald, options: { tag: trainote-web } }
     ports:
       - '80:80'
       - '443:443'

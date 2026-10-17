@@ -1,5 +1,10 @@
 # DOMAIN 으로 https 인증서 자동 발급(Let's Encrypt)·갱신
 {$DOMAIN} {
+	# 접근 로그(모든 요청 — 경로·IP·상태·User-Agent) JSON 으로 표준 출력 → journald (trainote-web)
+	log {
+		format json
+	}
+
 	encode zstd gzip
 
 	# API — 같은 주소에서 프록시하므로 쿠키·CORS 설정이 로컬 개발과 같음
