@@ -79,9 +79,10 @@ function WorkoutEditor({ member, date, initial }: { member: MemberDto; date: str
     const key = getWorkoutsGetQueryKey(member.code, date)
     if (body.exercises.length) queryClient.setQueryData(key, { ...body, memberCode: member.code, date })
     else queryClient.removeQueries({ queryKey: key })
-    // 목록 요약·달력 점·지난 기록 갱신
+    // 목록 요약·달력 점·지난 기록·남은 PT 횟수 갱신
     await queryClient.invalidateQueries({
-      predicate: (q) => typeof q.queryKey[0] === 'string' && q.queryKey[0].includes('/workouts') && q.queryKey[0] !== key[0],
+      predicate: (q) =>
+        typeof q.queryKey[0] === 'string' && (q.queryKey[0].includes('/workouts') || q.queryKey[0] === '/api/v1/members') && q.queryKey[0] !== key[0],
     })
   })
 

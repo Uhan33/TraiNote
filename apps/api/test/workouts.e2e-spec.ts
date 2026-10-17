@@ -12,7 +12,7 @@ import { Trainer } from './../src/trainers/trainer.entity.js';
 describe('members · workouts (e2e)', () => {
   let app: INestApplication<App>;
   const suffix = Date.now().toString(36);
-  const ids = [`wa_${suffix}`, `wb_${suffix}`];
+  const ids = [`wa_${suffix}`, `wb_${suffix}`, `wc_${suffix}`];
 
   // 가입하면 쿠키가 유지되는 agent
   const trainer = async (loginId: string) => {
@@ -94,5 +94,27 @@ describe('members · workouts (e2e)', () => {
     expect((await a.get('/api/v1/members').expect(200)).body).toEqual([]);
     expect((await a.get('/api/v1/workouts/dates').expect(200)).body).toEqual([]);
     await a.get(`${url}/2026-10-10`).expect(404);
+  });
+
+  it('남은 PT 횟수 — 지정 이후 새로 작성된 일지만 1회씩 차감, 수정은 그대로, 삭제하면 복구', async () => {
+    const a = await trainer(ids[2]);
+    const log = { title: '', memo: '', exercises: [{ name: '스쿼트', sets: [{ kg: 60, reps: 10, done: true }] }] };
+    const { body: member } = await a.post('/api/v1/members').send({ name: '김민지' }).expect(201);
+    expect(member.ptRemaining).toBeNull();
+    const url = `/api/v1/members/${member.code}`;
+    const remaining = async () => (await a.get('/api/v1/members').expect(200)).body[0].ptRemaining;
+
+    await a.put(`${url}/workouts/2026-10-01`).send(log).expect(204); // 지정 전 일지 — 차감 안 함
+    expect((await a.put(`${url}/pt`).send({ remaining: 10 }).expect(200)).body.ptRemaining).toBe(10);
+    await a.put(`${url}/workouts/2026-10-02`).send(log).expect(204);
+    await a.put(`${url}/workouts/2026-10-02`).send({ ...log, title: '수정' }).expect(204);
+    await a.put(`${url}/workouts/2026-10-01`).send({ ...log, title: '수정' }).expect(204);
+    expect(await remaining()).toBe(9);
+
+    await a.put(`${url}/workouts/2026-10-02`).send({ ...log, exercises: [] }).expect(204);
+    expect(await remaining()).toBe(10);
+
+    await a.put(`${url}/pt`).send({ remaining: -1 }).expect(400);
+    expect((await a.put(`${url}/pt`).send({ remaining: null }).expect(200)).body.ptRemaining).toBeNull();
   });
 });

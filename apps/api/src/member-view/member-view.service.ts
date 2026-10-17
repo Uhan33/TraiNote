@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, IsNull, LessThan, Repository } from 'typeorm';
+import { Between, IsNull, LessThan, MoreThan, Repository } from 'typeorm';
 import { Member } from '../members/member.entity.js';
 import { assertDate } from '../workouts/workouts.service.js';
 import { WorkoutLog } from '../workouts/workout-log.entity.js';
@@ -31,11 +31,14 @@ export class MemberViewService {
     if (!/^\d{4}-\d{2}$/.test(month)) throw new BadRequestException('month 는 YYYY-MM 형식이어야 합니다');
     const [y, m] = month.split('-').map(Number);
     const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-    const [monthCount, totalCount] = await Promise.all([
+    const { ptTotal, ptCountedSince } = member;
+    const [monthCount, totalCount, ptUsed] = await Promise.all([
       this.logs.countBy({ memberId: member.id, logDate: Between(`${month}-01`, `${month}-${String(lastDay).padStart(2, '0')}`) }),
       this.logs.countBy({ memberId: member.id }),
+      ptCountedSince ? this.logs.countBy({ memberId: member.id, createdAt: MoreThan(ptCountedSince) }) : 0,
     ]);
-    return { name: member.name, trainerName: member.trainer.name, monthCount, totalCount };
+    const ptRemaining = ptTotal === null ? null : ptTotal - ptUsed;
+    return { name: member.name, trainerName: member.trainer.name, monthCount, totalCount, ptRemaining };
   }
 
   // 최신순 PAGE_SIZE 개. before(YYYY-MM-DD) 보다 이전만 — 무한 스크롤 커서

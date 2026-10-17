@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import AddMemberButton from './AddMemberButton'
 import DateNav from './DateNav'
 import { useMembersList, useWorkoutsListByDate, useWorkoutsLoggedDates } from '@/api/generated'
-import { summarize, todayKey } from './data'
+import { PT_LOW, ptLabel, summarize, todayKey } from './data'
 
 export default function WorkoutListPage() {
   const [params, setParams] = useSearchParams()
@@ -68,6 +68,11 @@ export default function WorkoutListPage() {
                       : '작성 전'}
                   </span>
                 </span>
+                {member.ptRemaining !== null && (
+                  <span className={`shrink-0 text-sm ${member.ptRemaining <= PT_LOW ? 'font-semibold text-destructive' : 'text-muted-foreground'}`}>
+                    {ptLabel(member.ptRemaining)}
+                  </span>
+                )}
                 {workout && <span className="size-2 shrink-0 rounded-full bg-foreground" aria-label="작성 완료" />}
                 <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
               </NavLink>

@@ -1,16 +1,18 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, Ellipsis, Pencil, RefreshCw, Send, Trash2 } from 'lucide-react'
+import { Check, Ellipsis, Pencil, RefreshCw, Send, Ticket, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { useMembersReissue, useMembersRemove, useMembersUpdate, type MemberDto } from '@/api/generated'
+import { useMembersReissue, useMembersRemove, useMembersSetPt, useMembersUpdate, type MemberDto } from '@/api/generated'
 import { MemberFields } from './AddMemberButton'
+import { ptLabel } from './data'
+import { PtInput } from './pt'
 import { useInvite } from './useInvite'
 
-type Mode = 'menu' | 'edit' | 'reissue' | 'delete'
+type Mode = 'menu' | 'edit' | 'pt' | 'reissue' | 'delete'
 
-// 회원 초대 보내기 · 정보(이름·메모) 수정 · 코드 재발급 · 삭제(연결 해제). 재발급·삭제는 확인 단계를 한 번 더 거침
+// 회원 초대 보내기 · 정보(이름·메모) 수정 · 남은 PT 횟수 · 코드 재발급 · 삭제(연결 해제). 재발급·삭제는 확인 단계를 한 번 더 거침
 export default function MemberMenu({ member, date }: { member: MemberDto; date: string }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -22,6 +24,9 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
   const update = useMembersUpdate<Error>()
   const remove = useMembersRemove<Error>()
   const reissue = useMembersReissue<Error>()
+  const setPt = useMembersSetPt<Error>()
+  const ptNow = member.ptRemaining === null ? '' : String(Math.max(0, member.ptRemaining))
+  const [pt, setPtValue] = useState('')
 
   // 회원 목록·일지 목록 갱신
   const refresh = () => queryClient.invalidateQueries({ predicate: (q) => typeof q.queryKey[0] === 'string' && q.queryKey[0].startsWith('/api/v1/') })
@@ -31,6 +36,7 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
     setMode('menu')
     setName(member.name)
     setMemo(member.memo)
+    setPt.reset()
     update.reset()
     remove.reset()
     reissue.reset()
@@ -45,7 +51,7 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
       <Drawer open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
         <DrawerContent className="mx-auto max-w-md">
           <DrawerHeader>
-            <DrawerTitle>{{ menu: member.name, edit: '회원 정보 수정', reissue: '코드 재발급', delete: '회원 삭제' }[mode]}</DrawerTitle>
+            <DrawerTitle>{{ menu: member.name, edit: '회원 정보 수정', pt: '남은 PT 횟수', reissue: '코드 재발급', delete: '회원 삭제' }[mode]}</DrawerTitle>
           </DrawerHeader>
 
           {mode === 'menu' && (
@@ -60,6 +66,15 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
               </button>
               <button type="button" onClick={() => setMode('edit')} className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted">
                 <Pencil className="size-5 text-muted-foreground" /> 회원 정보 수정
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPtValue(ptNow)
+                  setMode('pt')
+                }} className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted">
+                <Ticket className="size-5 text-muted-foreground" /> 남은 PT 횟수
+                <span className="ml-auto text-sm text-muted-foreground">{member.ptRemaining === null ? '관리 안 함' : ptLabel(member.ptRemaining)}</span>
               </button>
               <button type="button" onClick={() => setMode('reissue')} className="flex h-12 items-center gap-3 rounded-lg px-2 text-left active:bg-muted">
                 <RefreshCw className="size-5 text-muted-foreground" /> 코드 재발급
@@ -83,6 +98,26 @@ export default function MemberMenu({ member, date }: { member: MemberDto; date: 
               {update.error && <p className="text-sm text-destructive">{update.error.message}</p>}
               <Button type="submit" className="h-12 rounded-xl text-base" disabled={!name.trim() || update.isPending}>
                 저장
+              </Button>
+            </form>
+          )}
+
+          {mode === 'pt' && (
+            <form
+              className="flex flex-col gap-4 px-4 pb-8"
+              onSubmit={(e) => {
+                e.preventDefault()
+                setPt.mutate({ code: member.code, data: { remaining: pt ? Number(pt) : null } }, { onSuccess: () => void refresh().then(close) })
+              }}
+            >
+              <p className="text-sm text-muted-foreground">
+                지금부터 남은 횟수를 입력하세요. 이후 운동일지를 새로 쓸 때마다 1회씩 줄어요. 재등록은 +버튼으로 더하고, 노쇼 차감은 숫자를 직접
+                고쳐 주세요.
+              </p>
+              <PtInput value={pt} onChange={setPtValue} autoFocus />
+              {setPt.error && <p className="text-sm text-destructive">{setPt.error.message}</p>}
+              <Button type="submit" className="h-12 rounded-xl text-base" disabled={setPt.isPending}>
+                {pt ? '저장' : '횟수 관리 안 함'}
               </Button>
             </form>
           )}

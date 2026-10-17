@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, CurrentTrainerId } from '../auth/auth.guard.js';
-import { CreateMemberDto, MemberDto, UpdateMemberDto } from './dto.js';
+import { CreateMemberWithPtDto, MemberDto, SetPtDto, UpdateMemberDto } from './dto.js';
 import { MembersService } from './members.service.js';
 
 @ApiTags('members')
@@ -18,7 +18,7 @@ export class MembersController {
 
   @Post()
   @ApiCreatedResponse({ type: MemberDto })
-  create(@CurrentTrainerId() trainerId: string, @Body() dto: CreateMemberDto) {
+  create(@CurrentTrainerId() trainerId: string, @Body() dto: CreateMemberWithPtDto) {
     return this.members.create(trainerId, dto);
   }
 
@@ -27,6 +27,13 @@ export class MembersController {
   @ApiNotFoundResponse()
   update(@CurrentTrainerId() trainerId: string, @Param('code') code: string, @Body() dto: UpdateMemberDto) {
     return this.members.update(trainerId, code, dto);
+  }
+
+  @Put(':code/pt')
+  @ApiOkResponse({ type: MemberDto, description: '지금부터 남은 PT 횟수 지정 — 이후 작성되는 운동일지마다 1회 차감' })
+  @ApiNotFoundResponse()
+  setPt(@CurrentTrainerId() trainerId: string, @Param('code') code: string, @Body() dto: SetPtDto) {
+    return this.members.setPt(trainerId, code, dto.remaining ?? null);
   }
 
   @Post(':code/reissue')

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { getMembersListQueryKey, useMembersCreate, type MemberDto } from '@/api/generated'
+import { PtInput } from './pt'
 import { useInvite } from './useInvite'
 
 // 회원 추가 후 그 회원의 오늘 일지로 이동하고, 같은 창에서 바로 초대 보내기 단계로 전환
@@ -14,6 +15,7 @@ export default function AddMemberButton({ date }: { date: string }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [memo, setMemo] = useState('')
+  const [pt, setPt] = useState('')
   const trimmed = name.trim()
   const queryClient = useQueryClient()
   const create = useMembersCreate<Error>()
@@ -24,13 +26,14 @@ export default function AddMemberButton({ date }: { date: string }) {
     e.preventDefault()
     if (!trimmed || create.isPending) return
     create.mutate(
-      { data: { name: trimmed, memo } },
+      { data: { name: trimmed, memo, ptRemaining: pt ? Number(pt) : undefined } },
       {
         onSuccess: async (member) => {
           await queryClient.invalidateQueries({ queryKey: getMembersListQueryKey() })
           setAdded(member)
           setName('')
           setMemo('')
+          setPt('')
           navigate(`/workouts/${member.code}?date=${date}`)
         },
       },
@@ -50,6 +53,7 @@ export default function AddMemberButton({ date }: { date: string }) {
           if (!o) {
             setName('')
             setMemo('')
+            setPt('')
             setAdded(null)
             create.reset()
           }
@@ -78,6 +82,12 @@ export default function AddMemberButton({ date }: { date: string }) {
           ) : (
           <form onSubmit={submit} className="flex flex-col gap-4 px-4 pb-8">
             <MemberFields name={name} memo={memo} onName={setName} onMemo={setMemo} autoFocus />
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium">
+                남은 PT 횟수 <span className="font-normal text-muted-foreground">(선택 · 일지를 쓸 때마다 1회씩 차감)</span>
+              </span>
+              <PtInput value={pt} onChange={setPt} />
+            </div>
             <p className="text-sm text-muted-foreground">회원 ID(6자리)는 자동으로 만들어져요</p>
             {create.error && <p className="text-sm text-destructive">{create.error.message}</p>}
             <Button type="submit" className="h-12 rounded-xl text-base" disabled={!trimmed || create.isPending}>

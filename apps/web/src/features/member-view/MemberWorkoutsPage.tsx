@@ -49,6 +49,7 @@ export default function MemberWorkoutsPage() {
           <section className="mt-6 flex gap-3">
             <Stat label="이번 달 운동" value={`${profile.data.monthCount}회`} />
             <Stat label="전체 기록" value={`${profile.data.totalCount}회`} />
+            {profile.data.ptRemaining !== null && <Stat label="남은 PT" value={`${Math.max(0, profile.data.ptRemaining)}회`} />}
           </section>
         )}
 

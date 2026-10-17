@@ -53,7 +53,7 @@ describe('member view (e2e)', () => {
     expect(memberToken).toBeTruthy();
 
     const profile = (await http.get('/api/v1/member/me?month=2026-10').set('Cookie', memberToken).expect(200)).body;
-    expect(profile).toEqual({ name: '김민지', trainerName: '홍길동', monthCount: 12, totalCount: 12 });
+    expect(profile).toEqual({ name: '김민지', trainerName: '홍길동', monthCount: 12, totalCount: 12, ptRemaining: null });
     expect(JSON.stringify(profile)).not.toContain('비밀 메모');
 
     const page1 = (await http.get('/api/v1/member/me/workouts').set('Cookie', memberToken).expect(200)).body;

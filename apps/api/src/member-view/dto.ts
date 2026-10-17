@@ -16,6 +16,7 @@ export class MemberViewDto {
   @ApiProperty() trainerName: string;
   @ApiProperty({ description: 'month(YYYY-MM) 의 운동 횟수' }) monthCount: number;
   @ApiProperty() totalCount: number;
+  @ApiProperty({ type: Number, nullable: true, description: '남은 PT 횟수. null = 트레이너가 횟수 관리 안 함' }) ptRemaining: number | null;
 }
 
 export class MemberViewWorkoutDto extends OmitType(WorkoutLogDto, ['memberCode'] as const) {}

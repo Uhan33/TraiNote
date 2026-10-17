@@ -60,3 +60,7 @@ export const summarize = (exercises: ExerciseDto[]) => ({
   exerciseCount: exercises.length,
   setCount: exercises.reduce((sum, e) => sum + e.sets.length, 0),
 })
+
+// 남은 PT 횟수 표시 — 3회 이하면 재등록 시점이라 강조
+export const PT_LOW = 3
+export const ptLabel = (n: number) => (n > 0 ? `${n}회 남음` : n === 0 ? '모두 사용' : `${-n}회 초과`)

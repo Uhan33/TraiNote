@@ -34,6 +34,14 @@ export class Member {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
+  // 남은 PT 횟수 = pt_total - (pt_counted_since 이후 작성된 운동일지 수). null = 횟수 관리 안 함
+  // 트레이너가 남은 횟수를 정할 때마다(등록·재등록·노쇼 보정) 둘 다 다시 기록
+  @Column({ name: 'pt_total', type: 'int', nullable: true })
+  ptTotal: number | null;
+
+  @Column({ name: 'pt_counted_since', type: 'timestamptz', nullable: true })
+  ptCountedSince: Date | null;
+
   // null = 연결 중. 연결이 끊기면 코드 무효
   @Column({ name: 'disconnected_at', type: 'timestamptz', nullable: true })
   disconnectedAt: Date | null;

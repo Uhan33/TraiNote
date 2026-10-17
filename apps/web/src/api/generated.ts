@@ -51,18 +51,33 @@ export interface MemberDto {
   code: string;
   name: string;
   memo: string;
+  /**
+     * 남은 PT 횟수 (노쇼 차감 등으로 음수 가능). null = 횟수 관리 안 함
+     * @nullable
+     */
+  ptRemaining: number | null;
 }
 
-export interface CreateMemberDto {
+export interface CreateMemberWithPtDto {
   name: string;
   /** 트레이너만 보는 메모 */
   memo?: string;
+  /** 남은 PT 횟수 — 생략하면 횟수 관리 안 함 */
+  ptRemaining?: number;
 }
 
 export interface UpdateMemberDto {
   name: string;
   /** 트레이너만 보는 메모 */
   memo?: string;
+}
+
+export interface SetPtDto {
+  /**
+     * 지금부터 남은 PT 횟수. null = 횟수 관리 안 함
+     * @nullable
+     */
+  remaining: number | null;
 }
 
 export interface WorkoutSetDto {
@@ -102,6 +117,11 @@ export interface MemberViewDto {
   /** month(YYYY-MM) 의 운동 횟수 */
   monthCount: number;
   totalCount: number;
+  /**
+     * 남은 PT 횟수. null = 트레이너가 횟수 관리 안 함
+     * @nullable
+     */
+  ptRemaining: number | null;
 }
 
 export interface MemberViewWorkoutDto {
@@ -836,7 +856,7 @@ export const getMembersCreateUrl = () => {
   return `/api/v1/members`
 }
 
-export const membersCreate = async (createMemberDto: CreateMemberDto, options?: Parameters<typeof customFetch>[1]): Promise<MemberDto> => {
+export const membersCreate = async (createMemberWithPtDto: CreateMemberWithPtDto, options?: Parameters<typeof customFetch>[1]): Promise<MemberDto> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -857,7 +877,7 @@ return customFetch<MemberDto>(getMembersCreateUrl(),
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createMemberDto)
+    body: JSON.stringify(createMemberWithPtDto)
   }
 );}
 
@@ -895,9 +915,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type MembersCreateMutationResult = NonNullable<Awaited<ReturnType<typeof membersCreate>>>
-    export type MembersCreateMutationBody = CreateMemberDto
+    export type MembersCreateMutationBody = CreateMemberWithPtDto
     export type MembersCreateMutationError = unknown
-    export type MembersCreateMutationVariables = {data: CreateMemberDto}
+    export type MembersCreateMutationVariables = {data: CreateMemberWithPtDto}
 
     export const useMembersCreate = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersCreate>>, TError,MembersCreateMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -1059,6 +1079,89 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getMembersRemoveMutationOptions(options), queryClient);
+    }
+
+export const getMembersSetPtUrl = (code: string,) => {
+
+
+
+
+  return `/api/v1/members/${code}/pt`
+}
+
+export const membersSetPt = async (code: string,
+    setPtDto: SetPtDto, options?: Parameters<typeof customFetch>[1]): Promise<MemberDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MemberDto>(getMembersSetPtUrl(code),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setPtDto)
+  }
+);}
+
+
+
+
+
+export const getMembersSetPtMutationKey = () => ['membersSetPt'] as const;
+
+export const getMembersSetPtMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersSetPt>>, TError,MembersSetPtMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof membersSetPt>>, TError,MembersSetPtMutationVariables, TContext> => {
+
+const mutationKey = getMembersSetPtMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof membersSetPt>>, MembersSetPtMutationVariables> = (props) => {
+          const {code,data} = props ?? {};
+
+          return  membersSetPt(code,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MembersSetPtMutationResult = NonNullable<Awaited<ReturnType<typeof membersSetPt>>>
+    export type MembersSetPtMutationBody = SetPtDto
+    export type MembersSetPtMutationError = void
+    export type MembersSetPtMutationVariables = {code: string;data: SetPtDto}
+
+    export const useMembersSetPt = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersSetPt>>, TError,MembersSetPtMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof membersSetPt>>,
+        TError,
+        MembersSetPtMutationVariables,
+        TContext
+      > => {
+      return useMutation(getMembersSetPtMutationOptions(options), queryClient);
     }
 
 export const getMembersReissueUrl = (code: string,) => {
