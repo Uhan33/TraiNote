@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, ChevronLeft, History, Minus, Plus, Search, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input'
 import { ApiError } from '@/api/fetcher'
 import {
   getWorkoutsGetQueryKey,
+  getWorkoutsListByDateQueryKey,
   useMembersList,
   useWorkoutsGet,
   useWorkoutsMemberLoggedDates,
   useWorkoutsPrevious,
   workoutsSave,
+  type WorkoutLogDto,
   type MemberDto,
 } from '@/api/generated'
 import CopyId from './CopyId'
@@ -71,18 +73,27 @@ function WorkoutEditor({ member, date, initial }: { member: MemberDto; date: str
   const [workout, setWorkout] = useState<WorkoutForm>(initial)
   const [pickerOpen, setPickerOpen] = useState(false)
   const previous = useWorkoutsPrevious(member.code, { before: date }, { query: { retry: false, enabled: workout.exercises.length === 0 } })
+  // 서버에 이 날 일지가 있는지 — 생기거나 없어질 때만 목록·달력·남은 PT 를 다시 불러옴
+  const exists = useRef(initial.exercises.length > 0)
 
   const autosave = useAutosave(async (value: WorkoutForm) => {
     const body = toApi(value)
     await workoutsSave(member.code, date, body)
-    // 이 일지 캐시를 저장한 값으로 교체 — 다시 열었을 때 옛 내용으로 덮어쓰지 않게
+    const saved: WorkoutLogDto | null = body.exercises.length ? { ...body, memberCode: member.code, date } : null
+    // 이 일지·그날 목록 캐시를 저장한 값으로 직접 교체 (요청 없음) — 다시 열었을 때 옛 내용으로 덮어쓰지 않게
     const key = getWorkoutsGetQueryKey(member.code, date)
-    if (body.exercises.length) queryClient.setQueryData(key, { ...body, memberCode: member.code, date })
+    if (saved) queryClient.setQueryData(key, saved)
     else queryClient.removeQueries({ queryKey: key })
-    // 목록 요약·달력 점·지난 기록·남은 PT 횟수 갱신
+    queryClient.setQueryData<WorkoutLogDto[]>(getWorkoutsListByDateQueryKey({ date }), (list) =>
+      list && [...list.filter((l) => l.memberCode !== member.code), ...(saved ? [saved] : [])],
+    )
+    if (exists.current === !!saved) return
+    exists.current = !!saved
+    // 일지가 새로 생기거나 삭제됨 — 달력 점·지난 기록·남은 PT 횟수 갱신
     await queryClient.invalidateQueries({
       predicate: (q) =>
-        typeof q.queryKey[0] === 'string' && (q.queryKey[0].includes('/workouts') || q.queryKey[0] === '/api/v1/members') && q.queryKey[0] !== key[0],
+        typeof q.queryKey[0] === 'string' &&
+        ((q.queryKey[0].includes('/workouts/') && q.queryKey[0] !== key[0]) || q.queryKey[0] === '/api/v1/members'),
     })
   })
 
