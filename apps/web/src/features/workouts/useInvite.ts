@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { MemberDto } from '@/api/generated'
+import { copyText } from '@/lib/clipboard'
 
 // 회원 초대 보내기 — 폰(터치 기기)은 공유 창으로 카톡·문자 바로 선택, 그 외는 클립보드 복사
 // 주소에 코드를 넣지 않고 회원이 따로 입력하게 함
@@ -14,8 +15,8 @@ export function useInvite(member: Pick<MemberDto, 'name' | 'code'> | null) {
       await navigator.share({ text }).catch(() => {})
       return
     }
-    // 공유·클립보드 모두 https(또는 localhost)에서만 동작 — 폰에서 http://<맥 IP> 로 테스트하면 아무 일도 없음
-    if (!(await navigator.clipboard?.writeText(text).then(() => true, () => false))) return
+    // 공유 창은 https 전용 — http 접속(폰 LAN 테스트)이면 복사로 대체
+    if (!(await copyText(text))) return
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }

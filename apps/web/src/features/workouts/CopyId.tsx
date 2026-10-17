@@ -1,17 +1,13 @@
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
+import { copyText } from '@/lib/clipboard'
 
-// 누르면 ID 복사. Clipboard API 는 https·localhost 에서만 동작(배포 환경은 https)
+// 누르면 ID 복사
 export default function CopyId({ id }: { id: string }) {
   const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(id)
-      setStatus('copied')
-    } catch {
-      setStatus('failed')
-    }
+    setStatus((await copyText(id)) ? 'copied' : 'failed')
     setTimeout(() => setStatus('idle'), 1500)
   }
 
