@@ -16,6 +16,7 @@ export default function BodyChart({ points: data, unit, label }: { points: Metri
   const [active, setActive] = useState<number | null>(null)
 
   // 실제 폭으로 그려 글자 크기가 화면 폭에 따라 늘어나지 않게
+  // 측정용 박스(box)는 기록이 없을 때도 항상 렌더 — 빠졌다 다시 생기면 새 박스를 관찰하지 못해 폭 0 으로 그래프가 사라짐
   useEffect(() => {
     const el = box.current
     if (!el) return
@@ -25,7 +26,11 @@ export default function BodyChart({ points: data, unit, label }: { points: Metri
   }, [])
 
   if (data.length === 0) {
-    return <p className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">아직 {label} 기록이 없어요</p>
+    return (
+      <div ref={box}>
+        <p className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">아직 {label} 기록이 없어요</p>
+      </div>
+    )
   }
 
   const values = data.map((d) => d.value)
@@ -55,7 +60,8 @@ export default function BodyChart({ points: data, unit, label }: { points: Metri
     setActive(best)
   }
 
-  const shown = active ?? data.length - 1
+  // 항목 전환·기록 삭제로 선택했던 위치가 없어지면 최신으로
+  const shown = active !== null && active < data.length ? active : data.length - 1
   const [ax, ay] = points[shown]
   const showDots = data.length <= 30
   // 값 표시가 위로 넘치면 점 아래에
@@ -91,7 +97,7 @@ export default function BodyChart({ points: data, unit, label }: { points: Metri
             </text>
           )}
 
-          {active !== null && <line x1={ax} x2={ax} y1={PAD.top} y2={HEIGHT - PAD.bottom} className="stroke-muted-foreground/50" strokeWidth={1} />}
+          {shown === active && <line x1={ax} x2={ax} y1={PAD.top} y2={HEIGHT - PAD.bottom} className="stroke-muted-foreground/50" strokeWidth={1} />}
           <path d={path} fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
           {showDots && points.map(([px, py], i) => <circle key={i} cx={px} cy={py} r={2.5} fill="currentColor" />)}
           <circle cx={ax} cy={ay} r={5} fill="currentColor" className="stroke-background" strokeWidth={2} />
