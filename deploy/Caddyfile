@@ -7,6 +7,15 @@
 		reverse_proxy api:4000
 	}
 
+	# 회원 화면 — 회원 앱 manifest 가 연결된 member.html (홈 화면 추가 시 /member 로 열리게)
+	@member path /member /member/*
+	handle @member {
+		root * /srv
+		header Cache-Control "no-cache"
+		rewrite * /member.html
+		file_server
+	}
+
 	# 웹 — 없는 경로는 index.html (SPA)
 	handle {
 		root * /srv
