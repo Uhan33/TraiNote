@@ -78,11 +78,19 @@ export default function BodyDetailPage() {
           }}
         >
           <p className="font-semibold">{existing ? '기록 수정' : '기록 추가'}</p>
-          <div className="grid grid-cols-[1fr_1fr] gap-2">
-            <Input type="date" value={date} max={todayKey()} onChange={(e) => setDate(e.target.value || todayKey())} aria-label="날짜" className="h-11 text-base md:text-base" />
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="date"
+              value={date}
+              max={todayKey()}
+              onChange={(e) => setDate(e.target.value || todayKey())}
+              aria-label="날짜"
+              // iOS Safari 날짜 입력은 기본 모양이 높이·최소 너비를 무시해 옆 칸과 겹침 → 기본 모양 제거
+              className="h-11 min-w-0 appearance-none text-base md:text-base [&::-webkit-date-and-time-value]:text-left"
+            />
             <UnitInput label="체중" unit="kg" value={weight} onChange={setWeight} placeholder={existing ? String(existing.weightKg) : '0.0'} />
           </div>
-          <div className="grid grid-cols-[1fr_1fr] gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <UnitInput label="체지방률 (선택)" unit="%" value={fat} onChange={setFat} placeholder="체지방률" />
             <UnitInput label="골격근량 (선택)" unit="kg" value={muscle} onChange={setMuscle} placeholder="골격근량" />
           </div>
