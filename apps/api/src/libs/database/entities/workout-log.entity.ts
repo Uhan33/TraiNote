@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
-import { Member } from '../members/member.entity.js';
+import { Member } from './member.entity.js';
 
 export type WorkoutSet = { kg: number | null; reps: number | null; done: boolean };
 export type WorkoutExercise = { name: string; sets: WorkoutSet[] };

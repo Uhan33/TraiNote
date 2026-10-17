@@ -6,7 +6,7 @@ import { App } from 'supertest/types.js';
 import { Repository } from 'typeorm';
 import { AppModule } from './../src/app.module.js';
 import { setupApp } from './../src/app.setup.js';
-import { Trainer } from './../src/trainers/trainer.entity.js';
+import { Trainer } from './../src/libs/database/entities/trainer.entity.js';
 
 // 실제 DB 필요: docker compose up -d && pnpm --filter api migration:run
 const cookie = (res: request.Response, name: string) =>

@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
-import { Trainer } from '../trainers/trainer.entity.js';
+import { isUniqueViolation } from '../libs/database/errors.js';
+import { Trainer } from '../libs/database/entities/trainer.entity.js';
+import { TrainerRepository } from '../libs/database/repositories/trainer.repository.js';
 import type { LoginDto, SignupDto, TrainerDto } from './dto.js';
 import { hashPassword, verifyPassword } from './password.js';
 
@@ -12,22 +12,23 @@ const toDto = ({ id, loginId, email, name }: Trainer): TrainerDto => ({ id, logi
 
 @Injectable()
 export class AuthService {
-  constructor(@InjectRepository(Trainer) private readonly trainers: Repository<Trainer>) {}
+  constructor(private readonly trainerRepository: TrainerRepository) {}
 
   async signup(dto: SignupDto) {
-    const existing = await this.trainers.findOne({
-      where: dto.email ? [{ loginId: dto.loginId }, { email: dto.email }] : { loginId: dto.loginId },
-    });
+    const existing = await this.trainerRepository.findDuplicate(dto.loginId, dto.email);
     if (existing) throw this.duplicate(existing.loginId === dto.loginId ? 'loginId' : 'email');
 
     try {
-      const trainer = await this.trainers.save(
-        this.trainers.create({ loginId: dto.loginId, email: dto.email ?? null, name: dto.name, passwordHash: await hashPassword(dto.password) }),
-      );
+      const trainer = await this.trainerRepository.add({
+        loginId: dto.loginId,
+        email: dto.email ?? null,
+        name: dto.name,
+        passwordHash: await hashPassword(dto.password),
+      });
       return toDto(trainer);
     } catch (e) {
       // 동시 가입으로 위 확인을 통과한 경우 — DB unique 제약이 최종 방어
-      if (e instanceof QueryFailedError && (e.driverError as { code?: string }).code === '23505') {
+      if (isUniqueViolation(e)) {
         throw this.duplicate(String((e.driverError as { detail?: string }).detail).includes('login_id') ? 'loginId' : 'email');
       }
       throw e;
@@ -35,14 +36,14 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const trainer = await this.trainers.findOneBy({ loginId: dto.loginId });
+    const trainer = await this.trainerRepository.findByLoginId(dto.loginId);
     const ok = await verifyPassword(dto.password, trainer?.passwordHash ?? DUMMY_HASH);
     if (!trainer?.passwordHash || !ok) throw new UnauthorizedException('아이디 또는 비밀번호가 올바르지 않습니다');
     return toDto(trainer);
   }
 
   async me(trainerId: string) {
-    const trainer = await this.trainers.findOneBy({ id: trainerId });
+    const trainer = await this.trainerRepository.findById(trainerId);
     if (!trainer) throw new UnauthorizedException('로그인이 필요합니다');
     return toDto(trainer);
   }

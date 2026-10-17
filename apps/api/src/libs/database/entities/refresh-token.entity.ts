@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Trainer } from '../trainers/trainer.entity.js';
+import { Trainer } from './trainer.entity.js';
 
 // 로그인 기기(브라우저·PWA)마다 1줄. 원문은 쿠키에만, DB 에는 SHA-256 해시
 // ponytail: 만료·폐기된 행은 쌓이기만 함. 많아지면 주기적 삭제 배치 추가

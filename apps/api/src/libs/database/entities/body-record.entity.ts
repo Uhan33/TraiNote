@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
-import { Member } from '../members/member.entity.js';
+import { Member } from './member.entity.js';
 
 // numeric 은 pg 드라이버가 문자열로 주므로 숫자로 변환
 const numeric = { to: (v: number | null) => v, from: (v: string | null) => (v === null ? null : Number(v)) };

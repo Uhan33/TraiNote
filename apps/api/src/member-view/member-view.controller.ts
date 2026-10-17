@@ -4,7 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Response } from 'express';
 import { BodyService } from '../body/body.service.js';
 import { BodyRecordDto } from '../body/dto.js';
-import type { Member } from '../members/member.entity.js';
+import type { Member } from '../libs/database/entities/member.entity.js';
 import { MemberSessionDto, MemberViewDto, MemberViewWorkoutDto } from './dto.js';
 import { CurrentMember, MEMBER_COOKIE, MemberAuthGuard } from './member-auth.guard.js';
 import { MEMBER_SESSION_DAYS, MemberViewService, PAGE_SIZE } from './member-view.service.js';
@@ -23,8 +23,8 @@ const memberCookie = (): CookieOptions => ({
 @Controller('member')
 export class MemberViewController {
   constructor(
-    private readonly view: MemberViewService,
-    private readonly body: BodyService,
+    private readonly memberViewService: MemberViewService,
+    private readonly bodyService: BodyService,
   ) {}
 
   @Post('session')
@@ -34,7 +34,7 @@ export class MemberViewController {
   @ApiNoContentResponse()
   @ApiUnauthorizedResponse({ description: '코드가 없거나 삭제된 회원' })
   async createSession(@Body() dto: MemberSessionDto, @Res({ passthrough: true }) res: Response) {
-    const token = await this.view.createSession(dto.code);
+    const token = await this.memberViewService.createSession(dto.code);
     res.cookie(MEMBER_COOKIE, token, { ...memberCookie(), maxAge: MEMBER_SESSION_DAYS * 24 * 60 * 60 * 1000 });
   }
 
@@ -51,7 +51,7 @@ export class MemberViewController {
   @ApiOkResponse({ type: MemberViewDto })
   @ApiUnauthorizedResponse()
   me(@CurrentMember() member: Member, @Query('month') month: string) {
-    return this.view.profile(member, month);
+    return this.memberViewService.profile(member, month);
   }
 
   @Get('me/workouts')
@@ -60,7 +60,7 @@ export class MemberViewController {
   @ApiOkResponse({ type: [MemberViewWorkoutDto], description: `최신순 최대 ${PAGE_SIZE}개` })
   @ApiUnauthorizedResponse()
   workouts(@CurrentMember() member: Member, @Query('before') before?: string) {
-    return this.view.workouts(member, before);
+    return this.memberViewService.workouts(member, before);
   }
 
   @Get('me/body-records')
@@ -68,6 +68,6 @@ export class MemberViewController {
   @ApiOkResponse({ type: [BodyRecordDto], description: '날짜 오름차순' })
   @ApiUnauthorizedResponse()
   bodyRecords(@CurrentMember() member: Member) {
-    return this.body.listByMemberId(member.id);
+    return this.bodyService.listByMemberId(member.id);
   }
 }

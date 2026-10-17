@@ -10,14 +10,14 @@ type AuthedRequest = Request & { trainerId?: string };
 // httpOnly 쿠키의 액세스 토큰(JWT, 15분) 검증 → req.trainerId. 컨트롤러에 @UseGuards(AuthGuard)
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly jwt: JwtService) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthedRequest>();
     const token = req.cookies?.[ACCESS_COOKIE] as string | undefined;
     if (!token) throw new UnauthorizedException('로그인이 필요합니다');
     try {
-      const payload = await this.jwt.verifyAsync<{ sub: string; typ?: string }>(token);
+      const payload = await this.jwtService.verifyAsync<{ sub: string; typ?: string }>(token);
       // 회원 토큰(typ: member)으로 트레이너 API 접근 차단
       if (payload.typ) throw new Error('not a trainer token');
       req.trainerId = payload.sub;

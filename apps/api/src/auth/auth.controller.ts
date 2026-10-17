@@ -24,16 +24,16 @@ const refreshCookie = (): CookieOptions => ({ ...baseCookie(), path: '/api/auth'
 @Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class AuthController {
   constructor(
-    private readonly auth: AuthService,
-    private readonly tokens: TokensService,
+    private readonly authService: AuthService,
+    private readonly tokensService: TokensService,
   ) {}
 
   @Post('signup')
   @ApiCreatedResponse({ type: TrainerDto })
   @ApiConflictResponse({ description: '아이디 또는 이메일 중복 (field 로 구분)' })
   async signup(@Body() dto: SignupDto, @Res({ passthrough: true }) res: Response) {
-    const trainer = await this.auth.signup(dto);
-    this.setCookies(res, await this.tokens.issue(trainer.id));
+    const trainer = await this.authService.signup(dto);
+    this.setCookies(res, await this.tokensService.issue(trainer.id));
     return trainer;
   }
 
@@ -42,8 +42,8 @@ export class AuthController {
   @ApiOkResponse({ type: TrainerDto })
   @ApiUnauthorizedResponse()
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const trainer = await this.auth.login(dto);
-    this.setCookies(res, await this.tokens.issue(trainer.id));
+    const trainer = await this.authService.login(dto);
+    this.setCookies(res, await this.tokensService.issue(trainer.id));
     return trainer;
   }
 
@@ -55,7 +55,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: '리프레시 토큰 없음·만료·재사용 — 다시 로그인' })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
-      this.setCookies(res, await this.tokens.rotate(req.cookies?.[REFRESH_COOKIE] as string | undefined));
+      this.setCookies(res, await this.tokensService.rotate(req.cookies?.[REFRESH_COOKIE] as string | undefined));
     } catch (e) {
       this.clearCookies(res);
       throw e;
@@ -66,7 +66,7 @@ export class AuthController {
   @HttpCode(204)
   @ApiNoContentResponse()
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    await this.tokens.revoke(req.cookies?.[REFRESH_COOKIE] as string | undefined);
+    await this.tokensService.revoke(req.cookies?.[REFRESH_COOKIE] as string | undefined);
     this.clearCookies(res);
   }
 
@@ -75,7 +75,7 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @ApiNoContentResponse({ description: '모든 기기에서 로그아웃' })
   async logoutAll(@CurrentTrainerId() trainerId: string, @Res({ passthrough: true }) res: Response) {
-    await this.tokens.revokeAll(trainerId);
+    await this.tokensService.revokeAll(trainerId);
     this.clearCookies(res);
   }
 
@@ -84,7 +84,7 @@ export class AuthController {
   @ApiOkResponse({ type: TrainerDto })
   @ApiUnauthorizedResponse()
   me(@CurrentTrainerId() trainerId: string) {
-    return this.auth.me(trainerId);
+    return this.authService.me(trainerId);
   }
 
   private setCookies(res: Response, { accessToken, refreshToken }: Tokens) {

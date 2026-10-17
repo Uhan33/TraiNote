@@ -19,9 +19,9 @@
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "dev": "nest start --watch",
-    "migration:generate": "nest build && typeorm -d dist/database/data-source.js migration:generate",
-    "migration:run": "nest build && typeorm -d dist/database/data-source.js migration:run",
-    "migration:revert": "nest build && typeorm -d dist/database/data-source.js migration:revert"
+    "migration:generate": "nest build && typeorm -d dist/libs/database/data-source.js migration:generate",
+    "migration:run": "nest build && typeorm -d dist/libs/database/data-source.js migration:run",
+    "migration:revert": "nest build && typeorm -d dist/libs/database/data-source.js migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.3",

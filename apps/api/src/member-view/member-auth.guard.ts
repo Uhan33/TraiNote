@@ -1,9 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, createParamDecorator } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import type { Request } from 'express';
-import { IsNull, Repository } from 'typeorm';
-import { Member } from '../members/member.entity.js';
+import { Member } from '../libs/database/entities/member.entity.js';
+import { MemberRepository } from '../libs/database/repositories/member.repository.js';
 
 export const MEMBER_COOKIE = 'trainote_member';
 
@@ -15,18 +14,15 @@ type MemberRequest = Request & { member?: Member };
 @Injectable()
 export class MemberAuthGuard implements CanActivate {
   constructor(
-    private readonly jwt: JwtService,
-    @InjectRepository(Member) private readonly members: Repository<Member>,
+    private readonly jwtService: JwtService,
+    private readonly memberRepository: MemberRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<MemberRequest>();
     const token = req.cookies?.[MEMBER_COOKIE] as string | undefined;
-    const payload = token ? await this.jwt.verifyAsync<MemberTokenPayload>(token).catch(() => null) : null;
-    const member =
-      payload?.typ === 'member'
-        ? await this.members.findOne({ where: { id: payload.sub, disconnectedAt: IsNull() }, relations: { trainer: true } })
-        : null;
+    const payload = token ? await this.jwtService.verifyAsync<MemberTokenPayload>(token).catch(() => null) : null;
+    const member = payload?.typ === 'member' ? await this.memberRepository.findByIdWithTrainer(payload.sub) : null;
     if (!member || member.codeIssuedAt.getTime() !== payload!.cia) throw new UnauthorizedException('회원 코드를 다시 입력해 주세요');
     req.member = member;
     return true;

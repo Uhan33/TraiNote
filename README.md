@@ -27,12 +27,22 @@ pnpm --filter web gen:api      # api 실행 중일 때 API 클라이언트 생�
 엔티티(`*.entity.ts`) 수정 후:
 
 ```bash
-pnpm --filter api migration:generate src/database/migrations/<이름>   # 변경분 SQL 생성
+pnpm --filter api migration:generate src/libs/database/migrations/<이름>   # 변경분 SQL 생성
 pnpm --filter api migration:run                                       # 적용
 pnpm --filter api migration:revert                                    # 마지막 1개 되돌리기
 ```
 
 `synchronize` 는 쓰지 않는다 — 스키마 변경은 항상 마이그레이션으로.
+
+## API 구조
+
+- `src/<도메인>/` — `*.service.ts` · `*.controller.ts` · `*.module.ts` · `dto.ts`
+- `src/libs/database/` — `entities/` · `repositories/` · `migrations/` · `DatabaseModule`(Global, Repository 전부 제공)
+- **쿼리는 Repository 에만.** 서비스는 TypeORM 을 import 하지 않고 Repository 의 도메인 메서드(`findOwned` 등)만 호출
+  - `BaseRepository<T>` 의 공통 메서드(`findOneBy`·`find`·`update` …)는 `FindOptions<T>` 타입으로 조건을 검사하고 `protected` — 소프트 삭제 같은 규칙이 Repository 밖으로 새지 않게
+- 엔티티 추가 시: `entities/` 에 엔티티 → `data-source.ts` 의 `entities` 에 등록 → `repositories/` 에 `BaseRepository` 상속 Repository → `DatabaseModule` 의 `repositories` 에 등록 → 마이그레이션 생성
+- `src/libs/` 의 다른 인프라 모듈(redis·mailer 등)은 필요할 때 같은 위치에 추가
+- 주입받는 필드 이름은 **클래스 이름의 camelCase** — `memberRepository: MemberRepository`, `membersService: MembersService`, `jwtService: JwtService` (역할이 이름에 드러나게)
 
 ## 브랜치
 

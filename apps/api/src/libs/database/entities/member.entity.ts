@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Trainer } from '../trainers/trainer.entity.js';
+import { Trainer } from './trainer.entity.js';
 
 // 회원은 가입하지 않음 — 이름만 저장(개인정보 최소화), 트레이너 1명에게만 연결
 @Entity('member')
