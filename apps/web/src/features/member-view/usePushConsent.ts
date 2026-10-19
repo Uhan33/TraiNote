@@ -6,7 +6,15 @@ import { isStandalone } from '@/lib/pwa'
 // 아이폰은 홈 화면 앱(iOS 16.4+)에서만 PushManager 가 있음
 
 const ASKED_KEY = 'pushConsentAsked'
-const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+export const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+
+export const markAsked = () => {
+  try {
+    localStorage.setItem(ASKED_KEY, '1')
+  } catch {
+    // 저장 안 되는 환경 — 다음에 다시 물어봄
+  }
+}
 
 const readAsked = () => {
   try {
@@ -20,7 +28,7 @@ const readAsked = () => {
 const toBytes = (base64url: string) => Uint8Array.from(atob(base64url.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
 
 // 이 기기를 알림 구독하고 서버에 등록 (이미 구독돼 있으면 다시 등록만)
-async function subscribe() {
+export async function subscribe() {
   const { publicKey } = await memberViewPushKey()
   if (!publicKey) return
   const registration = await navigator.serviceWorker.ready
@@ -33,7 +41,7 @@ async function subscribe() {
 
 // 동의 화면을 보여줄지 + 허용된 기기는 열 때마다 구독 재등록 (코드 재발급·다른 회원 코드로 입장한 뒤에도 계속 받게)
 export function usePushConsent() {
-  const [permission, setPermission] = useState<NotificationPermission>(supported ? Notification.permission : 'denied')
+  const [permission, setPermission] = useState<NotificationPermission>(pushSupported ? Notification.permission : 'denied')
   const [asked, setAsked] = useState(readAsked)
 
   useEffect(() => {
@@ -41,14 +49,10 @@ export function usePushConsent() {
   }, [permission])
 
   const finish = (result?: NotificationPermission) => {
-    try {
-      localStorage.setItem(ASKED_KEY, '1')
-    } catch {
-      // 저장 안 되는 환경 — 다음에 다시 물어봄
-    }
+    markAsked()
     setAsked(true)
     if (result) setPermission(result)
   }
 
-  return { show: supported && isStandalone() && permission === 'default' && !asked, finish }
+  return { show: pushSupported && isStandalone() && permission === 'default' && !asked, finish }
 }
