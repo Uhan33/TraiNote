@@ -88,7 +88,14 @@ export class MemberViewController {
   @HttpCode(204)
   @ApiNoContentResponse()
   @ApiUnauthorizedResponse()
-  async subscribePush(@CurrentMember() member: Member, @Body() dto: PushSubscriptionDto) {
-    await this.pushSubscriptionRepository.upsertByEndpoint({ memberId: member.id, ...dto });
+  async subscribePush(@CurrentMember() member: Member, @Body() { welcome, ...subscription }: PushSubscriptionDto) {
+    await this.pushSubscriptionRepository.upsertByEndpoint({ memberId: member.id, ...subscription });
+    if (welcome) {
+      await this.pushService.send(subscription, {
+        title: '알림이 켜졌어요',
+        body: '트레이너가 운동일지를 작성하면 알려드려요',
+        url: '/member/workouts',
+      });
+    }
   }
 }

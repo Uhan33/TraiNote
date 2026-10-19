@@ -22,7 +22,7 @@ export default function MemberNotificationsPage() {
       const result = await Notification.requestPermission()
       markAsked()
       setPermission(result)
-      if (result === 'granted') await subscribe()
+      if (result === 'granted') await subscribe(true)
     } catch {
       setError('알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요')
     } finally {

@@ -1,6 +1,6 @@
-import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsOptional, Matches, MaxLength } from 'class-validator';
 import { WorkoutLogDto } from '../workouts/dto.js';
 
 export class MemberSessionDto {
@@ -37,4 +37,7 @@ export class PushSubscriptionDto {
 
   @ApiProperty() @Matches(/^[A-Za-z0-9_=-]{1,200}$/) p256dh: string;
   @ApiProperty() @Matches(/^[A-Za-z0-9_=-]{1,100}$/) auth: string;
+
+  // 회원이 방금 알림을 허용했으면 true — 이 기기로 "알림이 켜졌어요" 확인 알림 (실행마다 하는 재등록은 false)
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() welcome?: boolean;
 }
