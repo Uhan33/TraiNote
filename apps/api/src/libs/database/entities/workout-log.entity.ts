@@ -32,6 +32,10 @@ export class WorkoutLog {
   @Column({ type: 'jsonb', default: () => "'[]'" })
   exercises: WorkoutExercise[];
 
+  // 트레이너가 "작성 완료"를 누른 시각 (null = 작성 중). 회원에게는 완료된 일지만 보이고, 처음 완료할 때 회원에게 푸시 알림
+  @Column({ name: 'completed_at', type: 'timestamptz', nullable: true })
+  completedAt: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

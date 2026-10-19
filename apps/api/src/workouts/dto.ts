@@ -59,4 +59,5 @@ export class SaveWorkoutDto {
 export class WorkoutLogDto extends SaveWorkoutDto {
   @ApiProperty({ example: 'K7Q2XA' }) memberCode: string;
   @ApiProperty({ example: '2026-10-17' }) date: string;
+  @ApiProperty({ type: String, nullable: true, description: '작성 완료 시각. null = 작성 중 (회원에게 안 보임)' }) completedAt: string | null;
 }

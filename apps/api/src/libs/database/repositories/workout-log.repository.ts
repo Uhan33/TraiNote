@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, LessThan, Repository } from 'typeorm';
+import { Between, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { WorkoutLog } from '../entities/workout-log.entity.js';
 import { BaseRepository } from './base.repository.js';
 
@@ -45,23 +45,29 @@ export class WorkoutLogRepository extends BaseRepository<WorkoutLog> {
     return this.findOne({ where: { memberId, logDate: LessThan(before) }, order: { logDate: 'DESC' } });
   }
 
+  // 회원 화면용 — 작성 완료된 일지만
   // 최신순 take 개. before 가 있으면 그 날짜 이전만 (무한 스크롤 커서)
-  listRecent(memberId: string, take: number, before?: string) {
+  listRecentCompleted(memberId: string, take: number, before?: string) {
     return this.find({
-      where: { memberId, ...(before ? { logDate: LessThan(before) } : {}) },
+      where: { memberId, completedAt: Not(IsNull()), ...(before ? { logDate: LessThan(before) } : {}) },
       order: { logDate: 'DESC' },
       take,
     });
   }
 
-  // from~to(포함) 기간, 생략하면 전체
-  countByMember(memberId: string, from?: string, to?: string) {
-    return this.countBy({ memberId, ...(from && to ? { logDate: Between(from, to) } : {}) });
+  // 작성 완료된 일지 수. from~to(포함) 기간, 생략하면 전체
+  countCompletedByMember(memberId: string, from?: string, to?: string) {
+    return this.countBy({ memberId, completedAt: Not(IsNull()), ...(from && to ? { logDate: Between(from, to) } : {}) });
   }
 
   // 회원·날짜당 1개 — 있으면 덮어쓰기 (created_at 유지: PT 차감 기준)
   upsertByDate(memberId: string, logDate: string, content: LogContent) {
     return this.upsert({ memberId, logDate, ...content, updatedAt: new Date() }, ['memberId', 'logDate']);
+  }
+
+  // 처음 완료할 때만 기록 — 이미 완료면 false (다시 알리지 않음)
+  async markCompleted(id: string) {
+    return (await this.update({ id, completedAt: IsNull() }, { completedAt: new Date() })) === 1;
   }
 
   deleteByDate(memberId: string, logDate: string) {

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MembersService } from '../members/members.service.js';
+import { PushService } from '../push/push.service.js';
 import type { SaveWorkoutDto, WorkoutLogDto } from './dto.js';
 import { WorkoutLog } from '../libs/database/entities/workout-log.entity.js';
 import { WorkoutLogRepository } from '../libs/database/repositories/workout-log.repository.js';
@@ -21,6 +22,7 @@ const toDto = (log: WorkoutLog, memberCode: string): WorkoutLogDto => ({
   title: log.title,
   memo: log.memo,
   exercises: log.exercises,
+  completedAt: log.completedAt?.toISOString() ?? null,
 });
 
 @Injectable()
@@ -28,6 +30,7 @@ export class WorkoutsService {
   constructor(
     private readonly workoutLogRepository: WorkoutLogRepository,
     private readonly membersService: MembersService,
+    private readonly pushService: PushService,
   ) {}
 
   // 그날 이 트레이너의 모든 회원 일지 (운동일지 목록 화면)
@@ -64,5 +67,19 @@ export class WorkoutsService {
       return;
     }
     await this.workoutLogRepository.upsertByDate(member.id, logDate, { title: dto.title.trim(), memo: dto.memo, exercises: dto.exercises });
+  }
+
+  // 작성 완료 — 회원 화면에 공개 + 처음 완료할 때만 회원에게 푸시 알림 (완료 후 수정은 다시 알리지 않음)
+  async complete(trainerId: string, memberCode: string, date: string) {
+    const member = await this.membersService.findOwned(trainerId, memberCode);
+    const log = await this.workoutLogRepository.findByDate(member.id, assertDate(date));
+    if (!log) throw new NotFoundException('일지가 없습니다');
+    if (!(await this.workoutLogRepository.markCompleted(log.id))) return;
+    const [, m, d] = log.logDate.split('-').map(Number);
+    await this.pushService.sendToMember(member.id, {
+      title: `${member.name}님, 운동일지가 도착했어요`,
+      body: `${m}월 ${d}일 ${log.title || '운동'} 기록을 확인해 보세요`,
+      url: '/member/workouts',
+    });
   }
 }

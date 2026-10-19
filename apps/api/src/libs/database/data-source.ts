@@ -4,6 +4,7 @@ import { BodyRecord } from './entities/body-record.entity.js';
 import { Exercise } from './entities/exercise.entity.js';
 import { Inquiry } from './entities/inquiry.entity.js';
 import { Member } from './entities/member.entity.js';
+import { PushSubscription } from './entities/push-subscription.entity.js';
 import { RefreshToken } from './entities/refresh-token.entity.js';
 import { Trainer } from './entities/trainer.entity.js';
 import { WorkoutLog } from './entities/workout-log.entity.js';
@@ -15,7 +16,7 @@ try {
   // .env 없음 — 배포 환경은 실제 환경변수 사용
 }
 
-export const entities = [Trainer, RefreshToken, Member, WorkoutLog, BodyRecord, Inquiry, Exercise];
+export const entities = [Trainer, RefreshToken, Member, WorkoutLog, BodyRecord, Inquiry, Exercise, PushSubscription];
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',

@@ -1,13 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiNoContentResponse, ApiOkResponse, ApiQuery, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Response } from 'express';
 import { BodyService } from '../body/body.service.js';
 import { BodyRecordDto } from '../body/dto.js';
 import type { Member } from '../libs/database/entities/member.entity.js';
-import { MemberSessionDto, MemberViewDto, MemberViewWorkoutDto } from './dto.js';
+import { MemberSessionDto, MemberViewDto, MemberViewWorkoutDto, PushKeyDto, PushSubscriptionDto } from './dto.js';
 import { CurrentMember, MEMBER_COOKIE, MemberAuthGuard } from './member-auth.guard.js';
 import { MEMBER_SESSION_DAYS, MemberViewService, PAGE_SIZE } from './member-view.service.js';
+import { PushService } from '../push/push.service.js';
+import { PushSubscriptionRepository } from '../libs/database/repositories/push-subscription.repository.js';
 
 // 회원 토큰 쿠키는 회원 API 에만 전송
 const memberCookie = (): CookieOptions => ({
@@ -25,6 +27,8 @@ export class MemberViewController {
   constructor(
     private readonly memberViewService: MemberViewService,
     private readonly bodyService: BodyService,
+    private readonly pushService: PushService,
+    private readonly pushSubscriptionRepository: PushSubscriptionRepository,
   ) {}
 
   @Post('session')
@@ -69,5 +73,22 @@ export class MemberViewController {
   @ApiUnauthorizedResponse()
   bodyRecords(@CurrentMember() member: Member) {
     return this.bodyService.listByMemberId(member.id);
+  }
+
+  // 알림 받기 — 브라우저 구독에 필요한 공개 키
+  @Get('push-key')
+  @ApiOkResponse({ type: PushKeyDto })
+  pushKey(): PushKeyDto {
+    return { publicKey: this.pushService.publicKey };
+  }
+
+  // 이 기기 알림 구독 등록 (같은 기기면 덮어쓰기). 트레이너가 일지를 작성 완료하면 알림
+  @Put('me/push-subscription')
+  @UseGuards(MemberAuthGuard)
+  @HttpCode(204)
+  @ApiNoContentResponse()
+  @ApiUnauthorizedResponse()
+  async subscribePush(@CurrentMember() member: Member, @Body() dto: PushSubscriptionDto) {
+    await this.pushSubscriptionRepository.upsertByEndpoint({ memberId: member.id, ...dto });
   }
 }

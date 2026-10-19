@@ -64,7 +64,7 @@ export default function WorkoutListPage() {
                   </span>
                   <span className="block truncate text-sm text-muted-foreground">
                     {workout && summary
-                      ? `${workout.title || '운동'} · ${summary.exerciseCount}개 운동 · ${summary.setCount}세트`
+                      ? `${workout.completedAt ? '' : '작성 중 · '}${workout.title || '운동'} · ${summary.exerciseCount}개 운동 · ${summary.setCount}세트`
                       : '작성 전'}
                   </span>
                 </span>
@@ -73,7 +73,12 @@ export default function WorkoutListPage() {
                     {ptLabel(member.ptRemaining)}
                   </span>
                 )}
-                {workout && <span className="size-2 shrink-0 rounded-full bg-foreground" aria-label="작성 완료" />}
+                {workout &&
+                  (workout.completedAt ? (
+                    <span className="size-2 shrink-0 rounded-full bg-foreground" aria-label="작성 완료" />
+                  ) : (
+                    <span className="size-2 shrink-0 rounded-full border border-foreground" aria-label="작성 중" />
+                  ))}
                 <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
               </NavLink>
             </li>

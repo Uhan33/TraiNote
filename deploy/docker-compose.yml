@@ -30,6 +30,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:?deploy/.env 에 JWT_SECRET 필요}
       CORS_ORIGIN: https://${DOMAIN}
       COOKIE_DOMAIN: ''
+      # 비어 있으면 회원 푸시 알림만 꺼짐
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
     depends_on:
       postgres: { condition: service_healthy }
     # 로그는 서버 journald 로 — 배포로 컨테이너가 바뀌어도 유지, 용량·기간 상한은 journald 설정 (README 배포)
