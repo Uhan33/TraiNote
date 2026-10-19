@@ -99,6 +99,21 @@ update inquiry set answer = '답변 내용', answered_at = now() where id = '<�
 
 category: `usage` 사용 방법 · `bug` 오류 신고 · `feature` 기능 제안 · `etc` 기타
 
+## 운동 종목 관리 (운영)
+
+운동 추가 창의 기본 종목은 `exercise` 테이블 — 재배포 없이 위 DB 접속 후 SQL 로 관리.
+트레이너 앱은 종목을 앱을 열 때 한 번 받으므로 앱을 다시 열면 반영된다.
+운동일지는 종목 이름을 텍스트로 저장하므로 이름을 바꾸거나 지워도 지난 일지는 그대로.
+
+```sql
+insert into exercise (body_part, name) values ('하체', '불가리안 스플릿 스쿼트');   -- 추가
+update exercise set name = '새 이름' where name = '옛 이름';                       -- 이름 변경
+delete from exercise where name = '종목 이름';                                     -- 삭제
+select body_part, name from exercise order by body_part, name;                   -- 확인
+```
+
+부위 표시 순서는 web `features/workouts/data.ts` 의 `BODY_PARTS` (가슴·등·하체·어깨·팔·코어). 목록에 없는 새 부위(예: 유산소)는 맨 뒤에 표시된다.
+
 ## 브랜치
 
 - `develop` — 개발 기본 브랜치. 작업은 여기서(또는 여기서 딴 기능 브랜치에서)

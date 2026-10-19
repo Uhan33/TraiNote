@@ -9,6 +9,7 @@ import { ApiError } from '@/api/fetcher'
 import {
   getWorkoutsGetQueryKey,
   getWorkoutsListByDateQueryKey,
+  useExercisesList,
   useMembersList,
   useWorkoutsGet,
   useWorkoutsMemberLoggedDates,
@@ -20,7 +21,7 @@ import {
 import CopyId from './CopyId'
 import DateNav from './DateNav'
 import MemberMenu from './MemberMenu'
-import { EMPTY_FORM, EXERCISE_CATALOG, formatDateLabel, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
+import { EMPTY_FORM, formatDateLabel, groupExercises, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
 import { useAutosave, type SaveStatus } from './useAutosave'
 
 export default function WorkoutEditPage() {
@@ -279,7 +280,9 @@ function ExercisePicker({
 }) {
   const [query, setQuery] = useState('')
   const q = query.trim()
-  const groups = Object.entries(EXERCISE_CATALOG)
+  // 종목은 운영자가 가끔 DB 에 추가하는 정도라 한 번 받으면 앱을 다시 열 때까지 재요청 안 함
+  const catalog = useExercisesList({ query: { staleTime: Infinity } })
+  const groups = groupExercises(catalog.data ?? [])
     .map(([part, names]) => [part, names.filter((n) => n.includes(q))] as const)
     .filter(([, names]) => names.length > 0)
   const exactMatch = groups.some(([, names]) => names.includes(q))
