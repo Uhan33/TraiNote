@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { useMemberViewCreateSession } from '@/api/generated'
 import AuthLayout from '@/features/auth/AuthLayout'
 import { useMemberProfile } from './useMemberProfile'
+import Splash from '@/components/Splash'
 
 // /member — 회원 코드 입력. 이미 입장한 기기면 바로 운동일지로
 export default function MemberEntryPage() {
@@ -15,7 +16,7 @@ export default function MemberEntryPage() {
   const [code, setCode] = useState('')
   const session = useMemberViewCreateSession<Error>()
 
-  if (profile.isPending) return null
+  if (profile.isPending) return <Splash />
   if (profile.isSuccess) return <Navigate to="/member/workouts" replace />
 
   const submit = (e: React.FormEvent) => {

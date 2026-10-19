@@ -6,6 +6,7 @@ import { appTabs } from '@/components/tabs'
 import PushConsent from './PushConsent'
 import { usePushConsent } from './usePushConsent'
 import { useMemberLogout, useMemberProfile } from './useMemberProfile'
+import Splash from '@/components/Splash'
 
 const TABS = appTabs('/member')
 
@@ -16,7 +17,7 @@ export default function MemberLayout() {
   const logout = useMemberLogout()
   const push = usePushConsent()
 
-  if (profile.isPending) return null
+  if (profile.isPending) return <Splash />
   if (profile.isError && !isUnauthorized(profile.error)) {
     return <ConnectionError onRetry={() => void profile.refetch()} retrying={profile.isFetching} />
   }
