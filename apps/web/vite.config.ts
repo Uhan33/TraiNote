@@ -42,7 +42,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       // 서비스 워커가 모든 화면 이동에 index.html(트레이너 manifest)을 주지 않도록 회원 화면은 서버(member.html)로
-      workbox: { navigateFallbackDenylist: [/^\/member(\/|$)/] },
+      // 회원 일지 알림(push) 처리는 public/push-sw.js
+      workbox: { navigateFallbackDenylist: [/^\/member(\/|$)/], importScripts: ['/push-sw.js'] },
       // 아이콘 PNG 는 scripts/gen-icons.mjs 로 만든 임시 "T" — 디자인 나오면 public/ 의 파일만 교체
       manifest: {
         name: 'TraiNote',

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronLeft, History, Minus, Plus, Search, Trash2 } from 'lucide-react'
+import { Check, CircleCheck, ChevronLeft, History, Minus, Plus, Search, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import {
   useWorkoutsGet,
   useWorkoutsMemberLoggedDates,
   useWorkoutsPrevious,
+  workoutsComplete,
   workoutsSave,
   type WorkoutLogDto,
   type MemberDto,
@@ -66,12 +67,28 @@ function WorkoutLoader({ member, date }: { member: MemberDto; date: string }) {
 
   if (log.isPending) return <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
   if (log.isError && !notFound) return <p className="py-16 text-center text-destructive">일지를 불러오지 못했어요</p>
-  return <WorkoutEditor member={member} date={date} initial={log.data ? toForm(log.data) : EMPTY_FORM} />
+  return (
+    <WorkoutEditor member={member} date={date} initial={log.data ? toForm(log.data) : EMPTY_FORM} initialCompletedAt={log.data?.completedAt ?? null} />
+  )
 }
 
-function WorkoutEditor({ member, date, initial }: { member: MemberDto; date: string; initial: WorkoutForm }) {
+function WorkoutEditor({
+  member,
+  date,
+  initial,
+  initialCompletedAt,
+}: {
+  member: MemberDto
+  date: string
+  initial: WorkoutForm
+  initialCompletedAt: string | null
+}) {
   const queryClient = useQueryClient()
   const [workout, setWorkout] = useState<WorkoutForm>(initial)
+  // 작성 완료 시각 — 완료해야 회원에게 보이고 알림이 감
+  const [completedAt, setCompletedAt] = useState(initialCompletedAt)
+  const [completing, setCompleting] = useState(false)
+  const [completeError, setCompleteError] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const previous = useWorkoutsPrevious(member.code, { before: date }, { query: { retry: false, enabled: workout.exercises.length === 0 } })
   // 서버에 이 날 일지가 있는지 — 생기거나 없어질 때만 목록·달력·남은 PT 를 다시 불러옴
@@ -80,7 +97,8 @@ function WorkoutEditor({ member, date, initial }: { member: MemberDto; date: str
   const autosave = useAutosave(async (value: WorkoutForm) => {
     const body = toApi(value)
     await workoutsSave(member.code, date, body)
-    const saved: WorkoutLogDto | null = body.exercises.length ? { ...body, memberCode: member.code, date } : null
+    const saved: WorkoutLogDto | null = body.exercises.length ? { ...body, memberCode: member.code, date, completedAt } : null
+    if (!saved) setCompletedAt(null) // 운동을 다 지우면 일지 삭제 — 다시 쓰면 새 일지(작성 중)
     // 이 일지·그날 목록 캐시를 저장한 값으로 직접 교체 (요청 없음) — 다시 열었을 때 옛 내용으로 덮어쓰지 않게
     const key = getWorkoutsGetQueryKey(member.code, date)
     if (saved) queryClient.setQueryData(key, saved)
@@ -97,6 +115,26 @@ function WorkoutEditor({ member, date, initial }: { member: MemberDto; date: str
         ((q.queryKey[0].includes('/workouts/') && q.queryKey[0] !== key[0]) || q.queryKey[0] === '/api/v1/members'),
     })
   })
+
+  // 남은 변경을 먼저 저장한 뒤 완료 처리 — 회원은 마지막 내용까지 받음
+  const complete = async () => {
+    setCompleting(true)
+    setCompleteError(false)
+    try {
+      if (!(await autosave.flush())) throw new Error('save failed')
+      await workoutsComplete(member.code, date)
+      const now = new Date().toISOString()
+      setCompletedAt(now)
+      queryClient.setQueryData<WorkoutLogDto>(getWorkoutsGetQueryKey(member.code, date), (log) => log && { ...log, completedAt: now })
+      queryClient.setQueryData<WorkoutLogDto[]>(getWorkoutsListByDateQueryKey({ date }), (list) =>
+        list?.map((l) => (l.memberCode === member.code ? { ...l, completedAt: now } : l)),
+      )
+    } catch {
+      setCompleteError(true)
+    } finally {
+      setCompleting(false)
+    }
+  }
 
   const update = (fn: (w: WorkoutForm) => void) => {
     const next = structuredClone(workout)
@@ -204,6 +242,22 @@ function WorkoutEditor({ member, date, initial }: { member: MemberDto; date: str
           rows={3}
           className="w-full resize-none rounded-xl border bg-transparent p-3 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
         />
+
+        {workout.exercises.length > 0 &&
+          (completedAt ? (
+            <p className="flex items-center justify-center gap-2 rounded-xl bg-muted py-3 text-sm text-muted-foreground">
+              <CircleCheck className="size-4" /> 작성 완료 · 수정하면 회원 화면에도 바로 반영돼요
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Button className="h-12 rounded-xl text-base" disabled={completing} onClick={() => void complete()}>
+                {completing ? '완료하는 중…' : '작성 완료'}
+              </Button>
+              <p className={`text-center text-xs ${completeError ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {completeError ? '완료하지 못했어요. 다시 눌러 주세요' : '완료해야 회원에게 일지가 보여요'}
+              </p>
+            </div>
+          ))}
       </div>
 
       <ExercisePicker

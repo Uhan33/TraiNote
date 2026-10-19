@@ -1,5 +1,6 @@
 import { Share, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { isStandalone } from '@/lib/pwa'
 
 // 홈 화면 추가 안내 — 폰 브라우저로 볼 때만, 닫으면 다시 안 보임
 // 안드로이드 Chrome: 설치 버튼(beforeinstallprompt) / iOS Safari: 설치 버튼이 없어 공유 → 홈 화면에 추가 안내
@@ -17,8 +18,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
   listeners.forEach((fn) => fn())
 })
 
-const isStandalone = () =>
-  matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
 // iPadOS 는 Mac 으로 표시되므로 터치 여부로 구분
 const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
 const isTouch = () => matchMedia('(pointer: coarse)').matches

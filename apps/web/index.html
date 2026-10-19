@@ -31,9 +31,15 @@
         if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark')
       } catch {}
     </script>
+    <!-- 로딩 화면: 앱(JS)이 뜨기 전 + 로그인 확인 중(components/Splash) — 같은 모양 -->
+    <style>
+      .splash { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #fff; color: #0a0a0a;
+        font: 700 30px/1 system-ui, -apple-system, sans-serif; letter-spacing: -0.02em; }
+      .dark .splash { background: #0a0a0a; color: #fafafa; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="splash">TraiNote</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

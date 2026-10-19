@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, CurrentTrainerId } from '../auth/auth.guard.js';
 import { SaveWorkoutDto, WorkoutLogDto } from './dto.js';
@@ -49,5 +49,13 @@ export class WorkoutsController {
   @ApiNoContentResponse()
   save(@CurrentTrainerId() trainerId: string, @Param('code') code: string, @Param('date') date: string, @Body() dto: SaveWorkoutDto) {
     return this.workoutsService.save(trainerId, code, date, dto);
+  }
+
+  @Post('members/:code/workouts/:date/complete')
+  @HttpCode(204)
+  @ApiNoContentResponse({ description: '작성 완료 (이미 완료면 그대로)' })
+  @ApiNotFoundResponse({ description: '그날 일지 없음' })
+  complete(@CurrentTrainerId() trainerId: string, @Param('code') code: string, @Param('date') date: string) {
+    return this.workoutsService.complete(trainerId, code, date);
   }
 }

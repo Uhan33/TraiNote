@@ -3,6 +3,7 @@ import { isUniqueViolation } from '../libs/database/errors.js';
 import { generateMemberCode } from './member-code.js';
 import { Member } from '../libs/database/entities/member.entity.js';
 import { MemberRepository } from '../libs/database/repositories/member.repository.js';
+import { PushSubscriptionRepository } from '../libs/database/repositories/push-subscription.repository.js';
 import type { CreateMemberWithPtDto, MemberDto, UpdateMemberDto } from './dto.js';
 
 // 남은 PT 횟수 = 지정한 횟수 - 그 이후 새로 작성된 운동일지 수. null = 횟수 관리 안 함
@@ -21,7 +22,10 @@ const ptFrom = (remaining: number | null | undefined) =>
 
 @Injectable()
 export class MembersService {
-  constructor(private readonly memberRepository: MemberRepository) {}
+  constructor(
+    private readonly memberRepository: MemberRepository,
+    private readonly pushSubscriptionRepository: PushSubscriptionRepository,
+  ) {}
 
   async list(trainerId: string) {
     const rows = await this.memberRepository.listByTrainer(trainerId);
@@ -50,7 +54,9 @@ export class MembersService {
     const member = await this.findOwned(trainerId, code);
     return this.withNewCode(async (newCode) => {
       Object.assign(member, { code: newCode, codeIssuedAt: new Date() });
-      return this.toDtoWithPt(await this.memberRepository.save(member));
+      const saved = await this.memberRepository.save(member);
+      await this.pushSubscriptionRepository.deleteByMember(member.id); // 예전 기기로 알림이 가지 않게
+      return this.toDtoWithPt(saved);
     });
   }
 
@@ -76,6 +82,7 @@ export class MembersService {
   async disconnect(trainerId: string, code: string) {
     const member = await this.findOwned(trainerId, code);
     await this.memberRepository.disconnect(member.id);
+    await this.pushSubscriptionRepository.deleteByMember(member.id);
   }
 
   // 이 트레이너에게 연결된 회원만. 남의 회원 코드면 존재 여부도 드러내지 않고 404

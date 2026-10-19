@@ -114,6 +114,14 @@ select body_part, name from exercise order by body_part, name;                  
 
 부위 표시 순서는 web `features/workouts/data.ts` 의 `BODY_PARTS` (가슴·등·하체·어깨·팔·코어). 목록에 없는 새 부위(예: 유산소)는 맨 뒤에 표시된다.
 
+## 운동일지 작성 완료 · 회원 알림
+
+- 일지는 2초마다 자동 저장되지만 **작성 완료**를 눌러야 회원 화면에 보인다 (`workout_log.completed_at`). 완료 후 수정은 회원 화면에 바로 반영.
+- 처음 완료할 때만 회원에게 웹 푸시 알림 (다시 완료·수정해도 재발송 없음).
+- 회원은 홈 화면 앱(아이폰 iOS 16.4+)에서 운동일지 화면의 **알림 받기**로 구독 → `push_subscription`. 코드 재발급·연결 해제 시 삭제.
+- 발송은 브라우저 회사 푸시 서버(Apple·Google 등)로 — 비용 없음. 키는 `deploy/.env` 의 `VAPID_PUBLIC_KEY`·`VAPID_PRIVATE_KEY` (없으면 알림만 꺼짐, 바꾸면 기존 구독이 끊김).
+- 발송 실패는 api 로그 `push_failed` 경고.
+
 ## 브랜치
 
 - `develop` — 개발 기본 브랜치. 작업은 여기서(또는 여기서 딴 기능 브랜치에서)

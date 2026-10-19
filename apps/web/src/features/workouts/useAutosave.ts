@@ -14,13 +14,13 @@ export function useAutosave<T>(save: (value: T) => Promise<void>) {
   const running = useRef(false)
   const timer = useRef<number | undefined>(undefined)
 
+  const runPromise = useRef<Promise<void> | null>(null)
+
   useEffect(() => {
     saveRef.current = save
   })
 
-  const run = useCallback(async () => {
-    window.clearTimeout(timer.current)
-    if (running.current) return
+  const loop = useCallback(async () => {
     running.current = true
     while (pending.current) {
       const { value } = pending.current
@@ -38,6 +38,21 @@ export function useAutosave<T>(save: (value: T) => Promise<void>) {
     running.current = false
     setStatus('saved')
   }, [])
+
+  // 저장 중이면 진행 중인 저장을 함께 기다림 (그 사이 들어온 변경도 이어서 저장됨)
+  const run = useCallback(() => {
+    window.clearTimeout(timer.current)
+    runPromise.current ??= loop().finally(() => (runPromise.current = null))
+    return runPromise.current
+  }, [loop])
+
+  // 남은 변경을 지금 저장하고 끝날 때까지 기다림. 저장 실패면 false (작성 완료 전에 사용)
+  // 두 번째 run: 기다리는 사이 끝난 저장 직후 들어온 변경·실패한 값까지 한 번 더
+  const flush = useCallback(async () => {
+    await run()
+    if (pending.current) await run()
+    return pending.current === null
+  }, [run])
 
   const queue = useCallback(
     (value: T) => {
@@ -67,5 +82,5 @@ export function useAutosave<T>(save: (value: T) => Promise<void>) {
     }
   }, [run])
 
-  return { status, queue, retry: run }
+  return { status, queue, retry: run, flush }
 }

@@ -45,8 +45,8 @@ export class MemberViewService {
     const [y, m] = month.split('-').map(Number);
     const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const [monthCount, totalCount, ptRemaining] = await Promise.all([
-      this.workoutLogRepository.countByMember(member.id, `${month}-01`, `${month}-${String(lastDay).padStart(2, '0')}`),
-      this.workoutLogRepository.countByMember(member.id),
+      this.workoutLogRepository.countCompletedByMember(member.id, `${month}-01`, `${month}-${String(lastDay).padStart(2, '0')}`),
+      this.workoutLogRepository.countCompletedByMember(member.id),
       this.membersService.ptRemaining(member),
     ]);
     return { name: member.name, trainerName: member.trainer.name, monthCount, totalCount, ptRemaining };
@@ -54,7 +54,7 @@ export class MemberViewService {
 
   // 최신순 PAGE_SIZE 개. before(YYYY-MM-DD) 보다 이전만 — 무한 스크롤 커서
   async workouts(member: Member, before?: string): Promise<MemberViewWorkoutDto[]> {
-    const rows = await this.workoutLogRepository.listRecent(member.id, PAGE_SIZE, before && assertDate(before));
+    const rows = await this.workoutLogRepository.listRecentCompleted(member.id, PAGE_SIZE, before && assertDate(before));
     return rows.map(({ logDate, title, memo, exercises }) => ({ date: logDate, title, memo, exercises }));
   }
 }

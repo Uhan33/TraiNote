@@ -15,6 +15,7 @@ import MemberBodyPage from '@/features/member-view/MemberBodyPage'
 import MemberEntryPage from '@/features/member-view/MemberEntryPage'
 import MemberHomeworkPage from '@/features/member-view/MemberHomeworkPage'
 import MemberLayout from '@/features/member-view/MemberLayout'
+import MemberNotificationsPage from '@/features/member-view/MemberNotificationsPage'
 import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
 import MemberWorkoutsPage from '@/features/member-view/MemberWorkoutsPage'
 import AdminInquiriesPage from '@/features/settings/AdminInquiriesPage'
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="meals" element={<ComingSoon />} />
                 <Route path="body" element={<MemberBodyPage />} />
                 <Route path="settings" element={<MemberSettingsPage />} />
+                <Route path="settings/notifications" element={<MemberNotificationsPage />} />
               </Route>
             </Route>
             <Route element={<GuestOnly />}>

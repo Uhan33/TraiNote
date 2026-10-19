@@ -1,6 +1,9 @@
-import { LogOut } from 'lucide-react'
+import { Bell, ChevronRight, LogOut } from 'lucide-react'
+import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
+import { isStandalone } from '@/lib/pwa'
 import { useMemberLogout, useMemberProfile } from './useMemberProfile'
+import { pushSupported } from './usePushConsent'
 
 export default function MemberSettingsPage() {
   const profile = useMemberProfile()
@@ -20,6 +23,14 @@ export default function MemberSettingsPage() {
           <span>다크 모드</span>
           <ThemeToggle />
         </div>
+        {/* 알림은 홈 화면 앱에서만 받을 수 있어 그때만 표시 */}
+        {pushSupported && isStandalone() && (
+          <Link to="/member/settings/notifications" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
+            <Bell className="size-5" />
+            <span className="flex-1">알림 설정</span>
+            <ChevronRight className="size-5 text-muted-foreground" />
+          </Link>
+        )}
         <button type="button" onClick={logout} className="flex h-14 w-full items-center gap-3 px-4 text-left text-destructive active:bg-muted">
           <LogOut className="size-5" /> 나가기
         </button>
