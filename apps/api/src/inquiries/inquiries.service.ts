@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InquiryRepository } from '../libs/database/repositories/inquiry.repository.js';
-import type { Inquiry } from '../libs/database/entities/inquiry.entity.js';
+import { TrainerPushSubscriptionRepository } from '../libs/database/repositories/trainer-push-subscription.repository.js';
+import { PushSubscriptionDto } from '../push/dto.js';
+import { PushService } from '../push/push.service.js';
+import type { Inquiry, InquiryCategory } from '../libs/database/entities/inquiry.entity.js';
 import type { AdminInquiryDto, CreateInquiryDto, InquiryDto } from './dto.js';
 
 // 기기 정보·연락처는 운영자용이라 응답에서 제외
@@ -23,12 +26,24 @@ const toAdminDto = (i: Inquiry): AdminInquiryDto =>
     appVersion: i.appVersion,
   });
 
+const CATEGORY_LABEL: Record<InquiryCategory, string> = { usage: '사용 방법', bug: '오류 신고', feature: '기능 제안', etc: '기타' };
+
 @Injectable()
 export class InquiriesService {
-  constructor(private readonly inquiryRepository: InquiryRepository) {}
+  constructor(
+    private readonly inquiryRepository: InquiryRepository,
+    private readonly pushService: PushService,
+    private readonly trainerPushSubscriptionRepository: TrainerPushSubscriptionRepository,
+  ) {}
 
   async list(trainerId: string) {
     return (await this.inquiryRepository.listByTrainer(trainerId)).map(toDto);
+  }
+
+  // 운영자: 이 기기로 새 문의 알림 받기
+  async subscribeAdminPush(trainerId: string, { welcome, ...device }: PushSubscriptionDto) {
+    await this.trainerPushSubscriptionRepository.upsertByEndpoint({ trainerId, ...device });
+    if (welcome) await this.pushService.sendToTrainerDevice(device, { title: '알림이 켜졌어요', body: '새 문의가 등록되면 알려드려요', url: '/settings/admin/inquiries' });
   }
 
   // 운영자: 전체 문의
@@ -52,6 +67,12 @@ export class InquiriesService {
       contact: dto.contact ?? '',
       userAgent: userAgent.slice(0, 300),
       appVersion: dto.appVersion ?? '',
+    });
+    // 운영자 기기로 새 문의 알림 (문의 관리에서 알림 받기 한 기기)
+    await this.pushService.sendToAdmins({
+      title: '새 문의가 등록됐어요',
+      body: `[${CATEGORY_LABEL[dto.category]}] ${dto.title}`,
+      url: '/settings/admin/inquiries',
     });
   }
 }

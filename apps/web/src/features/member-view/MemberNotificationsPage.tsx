@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { isStandalone } from '@/lib/pwa'
-import { markAsked, pushSupported, subscribe } from './usePushConsent'
+import { pushSupported } from '@/lib/push'
+import { markAsked, subscribe } from './usePushConsent'
 
 // 회원 내 정보 > 알림 설정 (홈 화면 앱에서만 메뉴 노출)
 // 알림을 끄거나 차단을 푸는 건 웹에서 할 수 없어 휴대폰 설정으로 안내

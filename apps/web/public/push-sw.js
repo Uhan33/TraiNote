@@ -1,4 +1,4 @@
-// 회원 운동일지 알림 — vite.config 의 workbox.importScripts 로 서비스 워커에 포함
+// 웹 푸시 알림 (회원 운동일지·운영자 새 문의) — vite.config 의 workbox.importScripts 로 서비스 워커에 포함
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {}
   event.waitUntil(
@@ -10,14 +10,17 @@ self.addEventListener('push', (event) => {
   )
 })
 
-// 알림을 누르면 열려 있는 회원 화면을 앞으로, 없으면 새로 열기
+// 알림을 누르면 같은 앱(회원 /member · 트레이너 그 외)의 열린 창을 그 화면으로, 없으면 새로 열기
+const isMember = (path) => path.startsWith('/member')
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = event.notification.data.url
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
-      const open = windows.find((w) => new URL(w.url).pathname.startsWith('/member'))
-      return open ? open.focus() : self.clients.openWindow(url)
+    self.clients.matchAll({ type: 'window' }).then(async (windows) => {
+      const open = windows.find((w) => isMember(new URL(w.url).pathname) === isMember(url))
+      if (!open) return self.clients.openWindow(url)
+      await open.focus()
+      return open.navigate(url).catch(() => {})
     }),
   )
 })
