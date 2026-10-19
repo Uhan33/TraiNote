@@ -1,4 +1,4 @@
-import type { ExerciseDto, SaveWorkoutDto } from '@/api/generated'
+import type { ExerciseCatalogDto, ExerciseDto, SaveWorkoutDto } from '@/api/generated'
 
 // 편집 중 입력값은 문자열(입력칸 그대로), 저장할 때 숫자로 변환
 export type FormSet = { kg: string; reps: string; done: boolean }
@@ -30,17 +30,17 @@ export const toApi = (form: WorkoutForm): SaveWorkoutDto => ({
   })),
 })
 
-// 분류 안에서는 가나다순 — 목록에서 찾기 쉽게 (아래 원본 순서와 무관하게 정렬)
-const sortKo = (names: string[]) => [...names].sort((x, y) => x.localeCompare(y, 'ko'))
+// 종목 목록은 DB(GET /exercises) — 부위 순서는 여기, 목록에 없는 새 부위는 맨 뒤. 부위 안에서는 가나다순
+const BODY_PARTS = ['가슴', '등', '하체', '어깨', '팔', '코어']
+const partRank = (part: string) => (BODY_PARTS.includes(part) ? BODY_PARTS.indexOf(part) : BODY_PARTS.length)
 
-export const EXERCISE_CATALOG: Record<string, string[]> = Object.fromEntries(Object.entries({
-  가슴: ['벤치프레스', '인클라인 벤치프레스', '덤벨 프레스', '체스트 프레스 머신', '펙덱 플라이', '푸시업'],
-  등: ['데드리프트', '랫풀다운', '바벨 로우', '시티드 로우', '풀업', '원암 덤벨 로우'],
-  하체: ['스쿼트', '레그 프레스', '런지', '레그 익스텐션', '레그 컬', '루마니안 데드리프트', '힙 쓰러스트'],
-  어깨: ['오버헤드 프레스', '사이드 레터럴 레이즈', '리어 델트 플라이', '덤벨 숄더 프레스'],
-  팔: ['바벨 컬', '덤벨 컬', '해머 컬', '케이블 푸시다운', '라잉 트라이셉스 익스텐션'],
-  코어: ['플랭크', '크런치', '행잉 레그 레이즈', '케이블 크런치'],
-}).map(([group, names]) => [group, sortKo(names)]))
+export const groupExercises = (exercises: ExerciseCatalogDto[]): [string, string[]][] => {
+  const groups = new Map<string, string[]>()
+  for (const e of exercises) groups.set(e.bodyPart, [...(groups.get(e.bodyPart) ?? []), e.name])
+  return [...groups]
+    .sort(([a], [b]) => partRank(a) - partRank(b) || a.localeCompare(b, 'ko'))
+    .map(([part, names]) => [part, names.sort((x, y) => x.localeCompare(y, 'ko'))])
+}
 
 export const toDateKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
