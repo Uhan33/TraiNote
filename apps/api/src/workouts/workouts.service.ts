@@ -78,7 +78,7 @@ export class WorkoutsService {
     const [, m, d] = log.logDate.split('-').map(Number);
     await this.pushService.sendToMember(member.id, {
       title: `${member.name}님, 운동일지가 도착했어요`,
-      body: `${m}월 ${d}일 ${log.title || '운동'} 기록을 확인해 보세요`,
+      body: `${m}월 ${d}일 운동 기록을 확인해 보세요`,
       url: '/member/workouts',
     });
   }
