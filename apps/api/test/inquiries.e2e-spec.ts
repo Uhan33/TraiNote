@@ -8,6 +8,7 @@ import { AppModule } from './../src/app.module.js';
 import { setupApp } from './../src/app.setup.js';
 import { Inquiry } from './../src/libs/database/entities/inquiry.entity.js';
 import { Trainer } from './../src/libs/database/entities/trainer.entity.js';
+import { TrainerPushSubscriptionRepository } from './../src/libs/database/repositories/trainer-push-subscription.repository.js';
 
 // 실제 DB 필요: docker compose up -d && pnpm --filter api migration:run
 describe('inquiries (e2e)', () => {
@@ -53,7 +54,23 @@ describe('inquiries (e2e)', () => {
     // 운영자 문의 관리: 일반 트레이너 403 → DB 에서 admin 지정 후 전체 조회·답변·수정
     await trainer.get('/api/v1/admin/inquiries').expect(403);
     await trainer.put(`/api/v1/admin/inquiries/${saved[0].id}/answer`).send({ answer: '몰래 답변' }).expect(403);
-    await app.get<Repository<Trainer>>(getRepositoryToken(Trainer)).update({ id: me.id }, { role: 'admin' });
+    const device = {
+      endpoint: `https://web.push.apple.com/${loginId}`,
+      p256dh: 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM',
+      auth: 'tBHItJI5svbpez7KI4CCXg',
+    };
+    await trainer.put('/api/v1/admin/inquiries/push-subscription').send(device).expect(403);
+    const trainers = app.get<Repository<Trainer>>(getRepositoryToken(Trainer));
+    await trainers.update({ id: me.id }, { role: 'admin' });
+
+    // 운영자 새 문의 알림 구독 — 발송 대상은 지금 운영자인 트레이너 기기만
+    await trainer.put('/api/v1/admin/inquiries/push-subscription').send({ ...device, endpoint: 'http://api:4000/x' }).expect(400);
+    await trainer.put('/api/v1/admin/inquiries/push-subscription').send(device).expect(204);
+    const adminDevices = () => app.get(TrainerPushSubscriptionRepository).listAdmins();
+    expect((await adminDevices()).map((d) => d.endpoint)).toContain(device.endpoint);
+    await trainers.update({ id: me.id }, { role: 'trainer' });
+    expect((await adminDevices()).map((d) => d.endpoint)).not.toContain(device.endpoint);
+    await trainers.update({ id: me.id }, { role: 'admin' });
     const all = (await trainer.get('/api/v1/admin/inquiries').expect(200)).body;
     expect(all.find((i: { id: string }) => i.id === saved[0].id)).toMatchObject({ trainerLoginId: loginId, trainerName: '홍길동', userAgent: 'test-phone' });
     await trainer.put(`/api/v1/admin/inquiries/${saved[0].id}/answer`).send({ answer: '  ' }).expect(400);

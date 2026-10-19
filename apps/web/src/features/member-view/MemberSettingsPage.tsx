@@ -1,9 +1,9 @@
 import { Bell, ChevronRight, LogOut } from 'lucide-react'
 import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
+import { pushSupported } from '@/lib/push'
 import { isStandalone } from '@/lib/pwa'
 import { useMemberLogout, useMemberProfile } from './useMemberProfile'
-import { pushSupported } from './usePushConsent'
 
 export default function MemberSettingsPage() {
   const profile = useMemberProfile()

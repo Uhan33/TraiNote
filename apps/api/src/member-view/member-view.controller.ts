@@ -5,7 +5,8 @@ import type { CookieOptions, Response } from 'express';
 import { BodyService } from '../body/body.service.js';
 import { BodyRecordDto } from '../body/dto.js';
 import type { Member } from '../libs/database/entities/member.entity.js';
-import { MemberSessionDto, MemberViewDto, MemberViewWorkoutDto, PushKeyDto, PushSubscriptionDto } from './dto.js';
+import { MemberSessionDto, MemberViewDto, MemberViewWorkoutDto, PushKeyDto } from './dto.js';
+import { PushSubscriptionDto } from '../push/dto.js';
 import { CurrentMember, MEMBER_COOKIE, MemberAuthGuard } from './member-auth.guard.js';
 import { MEMBER_SESSION_DAYS, MemberViewService, PAGE_SIZE } from './member-view.service.js';
 import { PushService } from '../push/push.service.js';
@@ -91,7 +92,7 @@ export class MemberViewController {
   async subscribePush(@CurrentMember() member: Member, @Body() { welcome, ...subscription }: PushSubscriptionDto) {
     await this.pushSubscriptionRepository.upsertByEndpoint({ memberId: member.id, ...subscription });
     if (welcome) {
-      await this.pushService.send(subscription, {
+      await this.pushService.sendToMemberDevice(subscription, {
         title: '알림이 켜졌어요',
         body: '트레이너가 운동일지를 작성하면 알려드려요',
         url: '/member/workouts',

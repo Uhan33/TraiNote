@@ -1,9 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft } from 'lucide-react'
-import { useState } from 'react'
+import { BellRing, ChevronLeft } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { getAdminInquiriesListQueryKey, useAdminInquiriesAnswer, useAdminInquiriesList, type AdminInquiryDto } from '@/api/generated'
+import {
+  adminInquiriesSubscribePush,
+  getAdminInquiriesListQueryKey,
+  useAdminInquiriesAnswer,
+  useAdminInquiriesList,
+  type AdminInquiryDto,
+} from '@/api/generated'
+import { pushDevice, pushSupported } from '@/lib/push'
 import { isUnauthorized } from '@/api/fetcher'
 import { categoryLabel } from './inquiry'
 
@@ -28,6 +35,7 @@ export default function AdminInquiriesPage() {
       </header>
 
       <div className="flex flex-col gap-3 px-5 pt-5 pb-10 lg:px-8">
+        <AdminPushRow />
         <div role="tablist" className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
           {(
             [
@@ -120,4 +128,52 @@ function AdminInquiryItem({ inquiry }: { inquiry: AdminInquiryDto }) {
       </form>
     </article>
   )
+}
+
+// 이 기기로 새 문의 알림 받기 — 허용된 기기는 화면을 열 때마다 서버에 다시 등록
+// (아이폰은 홈 화면 앱에서만 가능. 끄기·차단 해제는 휴대폰·브라우저 설정)
+function AdminPushRow() {
+  const [permission, setPermission] = useState<NotificationPermission>(pushSupported ? Notification.permission : 'denied')
+  const [initialPermission] = useState(permission)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (initialPermission === 'granted') void register(false).catch(() => {})
+  }, [initialPermission])
+
+  const enable = async () => {
+    setError('')
+    try {
+      const result = await Notification.requestPermission() // 버튼을 누른 직후에 바로 (아이폰)
+      setPermission(result)
+      if (result === 'granted') await register(true)
+    } catch {
+      setError('알림을 켜지 못했어요')
+    }
+  }
+
+  const status = !pushSupported
+    ? '이 기기는 알림을 받을 수 없어요 (아이폰은 홈 화면 앱에서)'
+    : permission === 'granted'
+      ? '이 기기로 새 문의 알림을 받고 있어요'
+      : permission === 'denied'
+        ? '알림이 차단돼 있어요. 기기 설정에서 TraiNote 알림을 허용해 주세요'
+        : '새 문의가 등록되면 이 기기로 알려드려요'
+
+  return (
+    <section className="flex items-center gap-3 rounded-2xl border p-4">
+      <BellRing className={`size-5 shrink-0 ${permission === 'granted' ? '' : 'text-muted-foreground'}`} />
+      <p className={`min-w-0 flex-1 text-sm ${error ? 'text-destructive' : 'text-muted-foreground'}`}>{error || status}</p>
+      {pushSupported && permission === 'default' && (
+        <Button className="h-9 shrink-0 rounded-lg" onClick={() => void enable()}>
+          알림 받기
+        </Button>
+      )}
+    </section>
+  )
+}
+
+async function register(welcome: boolean) {
+  const device = await pushDevice()
+  if (device) await adminInquiriesSubscribePush({ ...device, welcome })
 }

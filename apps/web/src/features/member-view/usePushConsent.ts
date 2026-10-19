@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
-import { memberViewPushKey, memberViewSubscribePush } from '@/api/generated'
+import { memberViewSubscribePush } from '@/api/generated'
+import { pushDevice, pushSupported } from '@/lib/push'
 import { isStandalone } from '@/lib/pwa'
 
 // 회원 운동일지 알림 — 홈 화면 앱(PWA)으로 처음 열 때 한 번 동의 화면.
-// 아이폰은 홈 화면 앱(iOS 16.4+)에서만 PushManager 가 있음
 
 const ASKED_KEY = 'pushConsentAsked'
-export const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 
 export const markAsked = () => {
   try {
@@ -24,20 +23,11 @@ const readAsked = () => {
   }
 }
 
-// VAPID 공개 키(base64url) → 바이트 (Safari 는 문자열 키를 받지 않음)
-const toBytes = (base64url: string) => Uint8Array.from(atob(base64url.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
-
-// 이 기기를 알림 구독하고 서버에 등록 (이미 구독돼 있으면 다시 등록만)
+// 이 기기를 회원 알림으로 서버에 등록 (이미 구독돼 있으면 다시 등록만)
 // welcome: 방금 허용함 — 서버가 이 기기로 "알림이 켜졌어요" 확인 알림
 export async function subscribe(welcome = false) {
-  const { publicKey } = await memberViewPushKey()
-  if (!publicKey) return
-  const registration = await navigator.serviceWorker.ready
-  const subscription =
-    (await registration.pushManager.getSubscription()) ??
-    (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toBytes(publicKey) }))
-  const { endpoint, keys } = subscription.toJSON()
-  await memberViewSubscribePush({ endpoint: endpoint!, p256dh: keys!.p256dh, auth: keys!.auth, welcome })
+  const device = await pushDevice()
+  if (device) await memberViewSubscribePush({ ...device, welcome })
 }
 
 // 동의 화면을 보여줄지 + 허용된 기기는 열 때마다 구독 재등록 (코드 재발급·다른 회원 코드로 입장한 뒤에도 계속 받게)
