@@ -3,12 +3,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { isStandalone } from '@/lib/pwa'
-import { pushSupported } from '@/lib/push'
-import { markAsked, subscribe } from './usePushConsent'
+import { markAsked, pushSupported, subscribe, type PushAudience } from '@/lib/push'
 
-// 회원 내 정보 > 알림 설정 (홈 화면 앱에서만 메뉴 노출)
+// 내 정보 > 알림 설정 — 회원·트레이너 공용 (홈 화면 앱에서만 메뉴 노출)
 // 알림을 끄거나 차단을 푸는 건 웹에서 할 수 없어 휴대폰 설정으로 안내
-export default function MemberNotificationsPage() {
+export default function NotificationSettings({ audience, backTo, description }: { audience: PushAudience; backTo: string; description: string }) {
   const navigate = useNavigate()
   const available = pushSupported && isStandalone()
   const [permission, setPermission] = useState<NotificationPermission>(available ? Notification.permission : 'denied')
@@ -21,9 +20,9 @@ export default function MemberNotificationsPage() {
     setError('')
     try {
       const result = await Notification.requestPermission()
-      markAsked()
+      markAsked(audience)
       setPermission(result)
-      if (result === 'granted') await subscribe(true)
+      if (result === 'granted') await subscribe(audience, true)
     } catch {
       setError('알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요')
     } finally {
@@ -34,7 +33,7 @@ export default function MemberNotificationsPage() {
   return (
     <div className="flex w-full max-w-2xl flex-1 flex-col">
       <header className="flex h-14 items-center gap-1 border-b px-2 lg:px-6">
-        <Button variant="ghost" size="icon-lg" aria-label="내 정보" onClick={() => navigate('/member/settings')}>
+        <Button variant="ghost" size="icon-lg" aria-label="내 정보" onClick={() => navigate(backTo)}>
           <ChevronLeft className="size-6" />
         </Button>
         <h1 className="text-lg font-semibold">알림 설정</h1>
@@ -44,15 +43,15 @@ export default function MemberNotificationsPage() {
         <section className="flex items-start gap-3 rounded-2xl border p-4">
           {permission === 'granted' ? <BellRing className="mt-0.5 size-5 shrink-0" /> : <BellOff className="mt-0.5 size-5 shrink-0 text-muted-foreground" />}
           <div className="min-w-0 flex-1">
-            <p className="font-semibold">운동일지 알림</p>
+            <p className="font-semibold">알림</p>
             <p className="text-sm text-muted-foreground">
               {!available
                 ? '홈 화면에 추가한 앱에서만 알림을 받을 수 있어요'
                 : permission === 'granted'
-                  ? '알림을 받고 있어요. 트레이너가 운동일지를 작성하면 알려드려요'
+                  ? `알림을 받고 있어요. ${description}`
                   : permission === 'denied'
                     ? '알림이 차단돼 있어요. 휴대폰 설정 > 알림 > TraiNote 에서 허용해 주세요'
-                    : '트레이너가 운동일지를 작성하면 알려드려요'}
+                    : description}
             </p>
           </div>
         </section>

@@ -15,7 +15,9 @@ import MemberBodyPage from '@/features/member-view/MemberBodyPage'
 import MemberEntryPage from '@/features/member-view/MemberEntryPage'
 import MemberHomeworkPage from '@/features/member-view/MemberHomeworkPage'
 import MemberLayout from '@/features/member-view/MemberLayout'
-import MemberNotificationsPage from '@/features/member-view/MemberNotificationsPage'
+import NotificationSettings from '@/components/NotificationSettings'
+import { MEMBER_PUSH, MEMBER_PUSH_DESCRIPTION } from '@/features/member-view/push'
+import { TRAINER_PUSH, TRAINER_PUSH_DESCRIPTION } from '@/features/settings/push'
 import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
 import MemberWorkoutsPage from '@/features/member-view/MemberWorkoutsPage'
 import AdminInquiriesPage from '@/features/settings/AdminInquiriesPage'
@@ -44,7 +46,10 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="meals" element={<ComingSoon />} />
                 <Route path="body" element={<MemberBodyPage />} />
                 <Route path="settings" element={<MemberSettingsPage />} />
-                <Route path="settings/notifications" element={<MemberNotificationsPage />} />
+                <Route
+                  path="settings/notifications"
+                  element={<NotificationSettings audience={MEMBER_PUSH} backTo="/member/settings" description={MEMBER_PUSH_DESCRIPTION} />}
+                />
               </Route>
             </Route>
             <Route element={<GuestOnly />}>
@@ -64,6 +69,10 @@ createRoot(document.getElementById('root')!).render(
                   <Route path=":memberId" element={<BodyDetailPage />} />
                 </Route>
                 <Route path="settings" element={<SettingsPage />} />
+                <Route
+                  path="settings/notifications"
+                  element={<NotificationSettings audience={TRAINER_PUSH} backTo="/settings" description={TRAINER_PUSH_DESCRIPTION} />}
+                />
                 <Route path="settings/inquiry" element={<InquiryPage />} />
                 <Route path="settings/inquiries" element={<InquiriesPage />} />
                 <Route path="settings/admin/inquiries" element={<AdminInquiriesPage />} />

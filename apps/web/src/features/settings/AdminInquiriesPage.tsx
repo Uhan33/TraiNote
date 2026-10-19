@@ -1,16 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { BellRing, ChevronLeft } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import {
-  adminInquiriesSubscribePush,
   getAdminInquiriesListQueryKey,
   useAdminInquiriesAnswer,
   useAdminInquiriesList,
   type AdminInquiryDto,
 } from '@/api/generated'
-import { pushDevice, pushSupported } from '@/lib/push'
+import { pushSupported, subscribe } from '@/lib/push'
+import { TRAINER_PUSH } from './push'
 import { isUnauthorized } from '@/api/fetcher'
 import { categoryLabel } from './inquiry'
 
@@ -130,23 +130,19 @@ function AdminInquiryItem({ inquiry }: { inquiry: AdminInquiryDto }) {
   )
 }
 
-// 이 기기로 새 문의 알림 받기 — 허용된 기기는 화면을 열 때마다 서버에 다시 등록
+// 이 기기로 새 문의 알림 받기 (트레이너 알림 구독과 같음 — PC 브라우저에서도 켤 수 있게)
+// 허용된 기기의 재등록은 RequireAuth(usePushConsent)가 앱을 열 때마다
 // (아이폰은 홈 화면 앱에서만 가능. 끄기·차단 해제는 휴대폰·브라우저 설정)
 function AdminPushRow() {
   const [permission, setPermission] = useState<NotificationPermission>(pushSupported ? Notification.permission : 'denied')
-  const [initialPermission] = useState(permission)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (initialPermission === 'granted') void register(false).catch(() => {})
-  }, [initialPermission])
 
   const enable = async () => {
     setError('')
     try {
       const result = await Notification.requestPermission() // 버튼을 누른 직후에 바로 (아이폰)
       setPermission(result)
-      if (result === 'granted') await register(true)
+      if (result === 'granted') await subscribe(TRAINER_PUSH, true)
     } catch {
       setError('알림을 켜지 못했어요')
     }
@@ -171,9 +167,4 @@ function AdminPushRow() {
       )}
     </section>
   )
-}
-
-async function register(welcome: boolean) {
-  const device = await pushDevice()
-  if (device) await adminInquiriesSubscribePush({ ...device, welcome })
 }

@@ -36,6 +36,13 @@ export class PushService {
     if (await this.deliver(device, payload)) await this.pushSubscriptionRepository.deleteByEndpoint(device.endpoint);
   }
 
+  // 트레이너의 모든 기기로
+  async sendToTrainer(trainerId: string, payload: PushPayload) {
+    if (!this.enabled) return;
+    const devices = await this.trainerPushSubscriptionRepository.listByTrainer(trainerId);
+    await Promise.all(devices.map((d) => this.sendToTrainerDevice(d, payload)));
+  }
+
   // 운영자(role = admin) 트레이너의 모든 기기로
   async sendToAdmins(payload: PushPayload) {
     if (!this.enabled) return;

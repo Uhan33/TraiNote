@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Trainer } from './trainer.entity.js';
 
-// 트레이너 기기의 웹 푸시 구독 — 지금은 운영자 새 문의 알림용 (발송 시 role = admin 만)
+// 트레이너 기기의 웹 푸시 구독 — 문의 답변·소식 알림, 운영자는 새 문의 알림 (발송 시 role = admin 확인)
 // 회원 구독(push_subscription)과 따로 — 한 기기에 트레이너·회원 앱이 함께 있어도 서로 덮어쓰지 않게
 @Entity('trainer_push_subscription')
 export class TrainerPushSubscription {

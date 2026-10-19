@@ -10,6 +10,10 @@ export class TrainerPushSubscriptionRepository extends BaseRepository<TrainerPus
     super(repository);
   }
 
+  listByTrainer(trainerId: string) {
+    return this.find({ where: { trainerId } });
+  }
+
   // 지금 운영자인 트레이너의 기기만 (권한 해제되면 바로 제외)
   listAdmins() {
     return this.find({ where: { trainer: { role: 'admin' } } });
