@@ -120,7 +120,9 @@ select body_part, name from exercise order by body_part, name;                  
 - 처음 완료할 때만 회원에게 웹 푸시 알림 (다시 완료·수정해도 재발송 없음).
 - 회원은 홈 화면 앱(아이폰 iOS 16.4+)에서 운동일지 화면의 **알림 받기**로 구독 → `push_subscription`. 코드 재발급·연결 해제 시 삭제.
 - 발송은 브라우저 회사 푸시 서버(Apple·Google 등)로 — 비용 없음. 키는 `deploy/.env` 의 `VAPID_PUBLIC_KEY`·`VAPID_PRIVATE_KEY` (없으면 알림만 꺼짐, 바꾸면 기존 구독이 끊김).
-- 운영자 새 문의 알림: 문의 관리 화면 상단 **알림 받기** → `trainer_push_subscription`. 문의가 등록되면 지금 운영자(role = admin)인 계정의 기기로 발송.
+- 트레이너도 홈 화면 앱 첫 실행 시 1회 동의 화면, 내 정보 > 알림 설정 → `trainer_push_subscription`.
+  - 문의에 첫 답변이 달리면 그 트레이너 기기로 알림 (답변 수정은 알림 없음).
+  - 운영자 새 문의 알림: 문의가 등록되면 지금 운영자(role = admin)인 계정의 기기로 발송. PC 브라우저는 문의 관리 상단 **알림 받기**.
 - 발송 실패는 api 로그 `push_failed` 경고.
 
 ## 브랜치

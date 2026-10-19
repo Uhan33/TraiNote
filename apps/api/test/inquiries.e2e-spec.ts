@@ -59,13 +59,14 @@ describe('inquiries (e2e)', () => {
       p256dh: 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM',
       auth: 'tBHItJI5svbpez7KI4CCXg',
     };
-    await trainer.put('/api/v1/admin/inquiries/push-subscription').send(device).expect(403);
+    // 트레이너 기기 알림 구독 (문의 답변 알림) — 로그인 필요, 알려진 푸시 서비스 주소만
+    await request(app.getHttpServer()).put('/api/v1/push-subscription').send(device).expect(401);
+    await trainer.put('/api/v1/push-subscription').send({ ...device, endpoint: 'http://api:4000/x' }).expect(400);
+    await trainer.put('/api/v1/push-subscription').send(device).expect(204);
     const trainers = app.get<Repository<Trainer>>(getRepositoryToken(Trainer));
     await trainers.update({ id: me.id }, { role: 'admin' });
 
-    // 운영자 새 문의 알림 구독 — 발송 대상은 지금 운영자인 트레이너 기기만
-    await trainer.put('/api/v1/admin/inquiries/push-subscription').send({ ...device, endpoint: 'http://api:4000/x' }).expect(400);
-    await trainer.put('/api/v1/admin/inquiries/push-subscription').send(device).expect(204);
+    // 새 문의 알림은 지금 운영자인 트레이너 기기만
     const adminDevices = () => app.get(TrainerPushSubscriptionRepository).listAdmins();
     expect((await adminDevices()).map((d) => d.endpoint)).toContain(device.endpoint);
     await trainers.update({ id: me.id }, { role: 'trainer' });

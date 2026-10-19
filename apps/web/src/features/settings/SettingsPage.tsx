@@ -1,8 +1,10 @@
-import { ChevronRight, History, Inbox, LogOut, MessageSquare } from 'lucide-react'
+import { Bell, ChevronRight, History, Inbox, LogOut, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuthMe } from '@/api/generated'
 import { useLogout } from '@/features/auth/useLogout'
+import { pushSupported } from '@/lib/push'
+import { isStandalone } from '@/lib/pwa'
 
 export default function SettingsPage() {
   const me = useAuthMe({ query: { staleTime: Infinity } })
@@ -33,6 +35,13 @@ export default function SettingsPage() {
           <span>다크 모드</span>
           <ThemeToggle />
         </div>
+        {/* 알림은 홈 화면 앱에서만 받을 수 있어 그때만 표시 */}
+        {pushSupported && isStandalone() && (
+          <Link to="/settings/notifications" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
+            <Bell className="size-5 text-muted-foreground" /> 알림 설정
+            <ChevronRight className="ml-auto size-5 text-muted-foreground" />
+          </Link>
+        )}
         <Link to="/settings/inquiry" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
           <MessageSquare className="size-5 text-muted-foreground" /> 문의하기
           <ChevronRight className="ml-auto size-5 text-muted-foreground" />

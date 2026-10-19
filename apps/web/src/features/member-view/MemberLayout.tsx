@@ -3,8 +3,9 @@ import { isUnauthorized } from '@/api/fetcher'
 import ConnectionError from '@/components/ConnectionError'
 import AppShell from '@/components/AppShell'
 import { appTabs } from '@/components/tabs'
-import PushConsent from './PushConsent'
-import { usePushConsent } from './usePushConsent'
+import PushConsent from '@/components/PushConsent'
+import { usePushConsent } from '@/lib/push'
+import { MEMBER_PUSH } from './push'
 import { useMemberLogout, useMemberProfile } from './useMemberProfile'
 import Splash from '@/components/Splash'
 
@@ -15,13 +16,27 @@ const TABS = appTabs('/member')
 export default function MemberLayout() {
   const profile = useMemberProfile()
   const logout = useMemberLogout()
-  const push = usePushConsent()
+  const push = usePushConsent(MEMBER_PUSH)
 
   if (profile.isPending) return <Splash />
   if (profile.isError && !isUnauthorized(profile.error)) {
     return <ConnectionError onRetry={() => void profile.refetch()} retrying={profile.isFetching} />
   }
   if (profile.isError) return <Navigate to="/member" replace />
-  if (push.show) return <PushConsent onDone={push.finish} />
+  if (push.show) {
+    return (
+      <PushConsent
+        title="운동일지 알림 받기"
+        description={
+          <>
+            트레이너가 운동일지를 작성하면
+            <br />
+            바로 알려드려요
+          </>
+        }
+        onDone={push.finish}
+      />
+    )
+  }
   return <AppShell tabs={TABS} userName={profile.data.name} logoutLabel="나가기" onLogout={logout} />
 }
