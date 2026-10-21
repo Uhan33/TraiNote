@@ -7,6 +7,12 @@
 
 	encode zstd gzip
 
+	# .env·.git 탐색 봇 — SPA 가 index.html 을 돌려주지 않고 바로 404
+	@probe path_regexp /\.(env|git)
+	handle @probe {
+		respond 404
+	}
+
 	# API — 같은 주소에서 프록시하므로 쿠키·CORS 설정이 로컬 개발과 같음
 	handle /api/* {
 		reverse_proxy api:4000
