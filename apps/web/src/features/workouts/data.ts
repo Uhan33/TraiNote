@@ -32,7 +32,7 @@ export const toApi = (form: WorkoutForm): SaveWorkoutDto => ({
 
 // 종목 목록은 DB(GET /exercises) — 부위 순서는 여기, 목록에 없는 새 부위는 맨 뒤. 부위 안에서는 가나다순
 const BODY_PARTS = ['가슴', '등', '하체', '어깨', '팔', '코어']
-const partRank = (part: string) => (BODY_PARTS.includes(part) ? BODY_PARTS.indexOf(part) : BODY_PARTS.length)
+export const partRank = (part: string) => (BODY_PARTS.includes(part) ? BODY_PARTS.indexOf(part) : BODY_PARTS.length)
 
 export const groupExercises = (exercises: ExerciseCatalogDto[]): [string, string[]][] => {
   const groups = new Map<string, string[]>()

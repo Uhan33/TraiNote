@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, CurrentTrainerId } from '../auth/auth.guard.js';
-import { SaveWorkoutDto, WorkoutLogDto } from './dto.js';
+import { SaveWorkoutDto, StrengthSeriesDto, WorkoutLogDto } from './dto.js';
 import { WorkoutsService } from './workouts.service.js';
 
 @ApiTags('workouts')
@@ -23,10 +23,22 @@ export class WorkoutsController {
     return this.workoutsService.loggedDates(trainerId);
   }
 
+  @Get('workouts/drafts')
+  @ApiOkResponse({ type: [WorkoutLogDto], description: '작성 완료 전 일지 (회원에게 안 보임) — 최신순' })
+  listDrafts(@CurrentTrainerId() trainerId: string) {
+    return this.workoutsService.listDrafts(trainerId);
+  }
+
   @Get('members/:code/workouts/dates')
   @ApiOkResponse({ type: [String], description: '이 회원의 일지가 있는 날짜' })
   memberLoggedDates(@CurrentTrainerId() trainerId: string, @Param('code') code: string) {
     return this.workoutsService.loggedDates(trainerId, code);
+  }
+
+  @Get('members/:code/strength')
+  @ApiOkResponse({ type: [StrengthSeriesDto], description: '종목별 최고 중량 추이 (회원 화면과 같음)' })
+  strength(@CurrentTrainerId() trainerId: string, @Param('code') code: string) {
+    return this.workoutsService.strength(trainerId, code);
   }
 
   @Get('members/:code/workouts/previous')

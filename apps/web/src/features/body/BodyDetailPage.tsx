@@ -5,10 +5,13 @@ import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import BodyOverview from '@/components/BodyOverview'
-import { getBodyListQueryKey, useBodyList, useBodyRemove, useBodySave, useMembersList, type BodyRecordDto } from '@/api/generated'
+import GrowthToggle from '@/components/GrowthToggle'
+import StrengthOverview from '@/components/StrengthOverview'
+import { getBodyListQueryKey, useBodyList, useBodyRemove, useBodySave, useMembersList, useWorkoutsStrength, type BodyRecordDto } from '@/api/generated'
+import { growthView, type GrowthView } from '@/lib/body'
 import { formatDateLabel, todayKey } from '@/features/workouts/data'
 
-// 회원 체중·체성분 — 요약·그래프 + 입력(같은 날짜면 수정) + 기록 목록(누르면 수정·삭제)
+// 회원 성장 — 운동(종목별 최고 중량, 회원 화면과 같음) · 체중: 체성분 요약·그래프 + 입력(같은 날짜면 수정) + 기록 목록(누르면 수정·삭제)
 export default function BodyDetailPage() {
   const { memberId: code = '' } = useParams()
   const navigate = useNavigate()
@@ -16,6 +19,9 @@ export default function BodyDetailPage() {
   const members = useMembersList()
   const member = members.data?.find((m) => m.code === code.toUpperCase())
   const records = useBodyList(code, { query: { enabled: !!member } })
+  const strength = useWorkoutsStrength(code, { query: { enabled: !!member } })
+  const [picked, setPicked] = useState<GrowthView | null>(null)
+  const view = growthView(picked, !!strength.data?.length, !!records.data?.length)
   const save = useBodySave<Error>()
   const remove = useBodyRemove<Error>()
 
@@ -72,100 +78,111 @@ export default function BodyDetailPage() {
             <ChevronLeft className="size-6" />
           </Button>
           <span className="text-lg font-semibold">{member?.name}</span>
-          <span className="text-sm text-muted-foreground">체중</span>
+          <span className="text-sm text-muted-foreground">성장</span>
         </div>
       </header>
 
       <div className="flex w-full max-w-2xl flex-col gap-6 px-5 pt-5 pb-10 lg:px-8">
-        {records.isPending ? (
-          <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
+        <GrowthToggle value={view} onChange={setPicked} />
+        {view === 'strength' ? (
+          strength.isPending ? (
+            <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
+          ) : (
+            <StrengthOverview series={strength.data ?? []} />
+          )
         ) : (
-          <BodyOverview records={records.data ?? []} />
-        )}
-
-        <form
-          className="flex flex-col gap-3 rounded-2xl border p-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (!valid || !changed) return
-            save.mutate(
-              { code, date, data: { ...values, weightKg: values.weightKg! } },
-              { onSuccess: () => void refresh().then(refill) },
-            )
-          }}
-        >
-          <p className="font-semibold">{existing ? '기록 수정' : '기록 추가'}</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="date"
-              value={date}
-              max={todayKey()}
-              onChange={(e) => setDate(e.target.value || todayKey())}
-              aria-label="날짜"
-              // iOS Safari 날짜 입력은 기본 모양이 높이·최소 너비를 무시해 옆 칸과 겹침 → 기본 모양 제거
-              className="h-11 min-w-0 appearance-none text-base md:text-base [&::-webkit-date-and-time-value]:text-left"
-            />
-            <UnitInput label="체중" unit="kg" value={weight} onChange={setWeight} placeholder="0.0" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <UnitInput label="체지방률 (선택)" unit="%" value={fat} onChange={setFat} placeholder="체지방률" />
-            <UnitInput label="골격근량 (선택)" unit="kg" value={muscle} onChange={setMuscle} placeholder="골격근량" />
-          </div>
-          {existing && <p className="text-xs text-muted-foreground">{formatDateLabel(date)}에 이미 기록이 있어요. 저장하면 바뀌어요.</p>}
-          {weight && !weightOk && <p className="text-xs text-destructive">체중은 10~400kg 사이로 입력하세요</p>}
-          {!fatOk && <p className="text-xs text-destructive">체지방률은 1~75% 사이로 입력하세요</p>}
-          {!muscleOk && <p className="text-xs text-destructive">골격근량은 5~100kg 사이로 입력하세요</p>}
-          {save.error && <p className="text-xs text-destructive">{save.error.message}</p>}
-          <div className="flex gap-2">
-            {existing && (
-              <Button
-                type="button"
-                variant="destructive"
-                className="h-11 flex-1 rounded-xl"
-                disabled={remove.isPending}
-                onClick={() => remove.mutate({ code, date }, { onSuccess: () => void refresh().then(refill) })}
-              >
-                삭제
-              </Button>
+          <>
+            {records.isPending ? (
+              <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
+            ) : (
+              <BodyOverview records={records.data ?? []} />
             )}
-            <Button type="submit" className="h-11 flex-[2] rounded-xl text-base" disabled={!valid || !changed || save.isPending}>
-              저장
-            </Button>
-          </div>
-        </form>
 
-        {list.length > 0 && (
-          <section>
-            <h2 className="px-1 pb-2 text-sm font-semibold text-muted-foreground">기록 · 누르면 수정</h2>
-            <ul className="divide-y rounded-2xl border">
-              {list.map((r, i) => {
-                const prev = list[i + 1]
-                const diff = prev ? Math.round((r.weightKg - prev.weightKg) * 100) / 100 : null
-                return (
-                  <li key={r.date}>
-                    <button
-                      type="button"
-                      onClick={() => setDate(r.date)}
-                      className={`flex min-h-12 w-full items-center justify-between px-4 py-2 text-left active:bg-muted ${r.date === date ? 'bg-muted' : ''}`}
-                    >
-                      <span className="flex flex-col">
-                        <span className="text-sm">{formatDateLabel(r.date)}</span>
-                        <CompositionText record={r} />
-                      </span>
-                      <span className="flex items-baseline gap-2">
-                        {diff !== null && diff !== 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {diff > 0 ? '▲' : '▼'} {Math.abs(diff)}
-                          </span>
-                        )}
-                        <span className="font-semibold">{r.weightKg}kg</span>
-                      </span>
-                    </button>
-                  </li>
+            <form
+              className="flex flex-col gap-3 rounded-2xl border p-4"
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!valid || !changed) return
+                save.mutate(
+                  { code, date, data: { ...values, weightKg: values.weightKg! } },
+                  { onSuccess: () => void refresh().then(refill) },
                 )
-              })}
-            </ul>
-          </section>
+              }}
+            >
+              <p className="font-semibold">{existing ? '기록 수정' : '기록 추가'}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  type="date"
+                  value={date}
+                  max={todayKey()}
+                  onChange={(e) => setDate(e.target.value || todayKey())}
+                  aria-label="날짜"
+                  // iOS Safari 날짜 입력은 기본 모양이 높이·최소 너비를 무시해 옆 칸과 겹침 → 기본 모양 제거
+                  className="h-11 min-w-0 appearance-none text-base md:text-base [&::-webkit-date-and-time-value]:text-left"
+                />
+                <UnitInput label="체중" unit="kg" value={weight} onChange={setWeight} placeholder="0.0" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <UnitInput label="체지방률 (선택)" unit="%" value={fat} onChange={setFat} placeholder="체지방률" />
+                <UnitInput label="골격근량 (선택)" unit="kg" value={muscle} onChange={setMuscle} placeholder="골격근량" />
+              </div>
+              {existing && <p className="text-xs text-muted-foreground">{formatDateLabel(date)}에 이미 기록이 있어요. 저장하면 바뀌어요.</p>}
+              {weight && !weightOk && <p className="text-xs text-destructive">체중은 10~400kg 사이로 입력하세요</p>}
+              {!fatOk && <p className="text-xs text-destructive">체지방률은 1~75% 사이로 입력하세요</p>}
+              {!muscleOk && <p className="text-xs text-destructive">골격근량은 5~100kg 사이로 입력하세요</p>}
+              {save.error && <p className="text-xs text-destructive">{save.error.message}</p>}
+              <div className="flex gap-2">
+                {existing && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="h-11 flex-1 rounded-xl"
+                    disabled={remove.isPending}
+                    onClick={() => remove.mutate({ code, date }, { onSuccess: () => void refresh().then(refill) })}
+                  >
+                    삭제
+                  </Button>
+                )}
+                <Button type="submit" className="h-11 flex-[2] rounded-xl text-base" disabled={!valid || !changed || save.isPending}>
+                  저장
+                </Button>
+              </div>
+            </form>
+
+            {list.length > 0 && (
+              <section>
+                <h2 className="px-1 pb-2 text-sm font-semibold text-muted-foreground">기록 · 누르면 수정</h2>
+                <ul className="divide-y rounded-2xl border">
+                  {list.map((r, i) => {
+                    const prev = list[i + 1]
+                    const diff = prev ? Math.round((r.weightKg - prev.weightKg) * 100) / 100 : null
+                    return (
+                      <li key={r.date}>
+                        <button
+                          type="button"
+                          onClick={() => setDate(r.date)}
+                          className={`flex min-h-12 w-full items-center justify-between px-4 py-2 text-left active:bg-muted ${r.date === date ? 'bg-muted' : ''}`}
+                        >
+                          <span className="flex flex-col">
+                            <span className="text-sm">{formatDateLabel(r.date)}</span>
+                            <CompositionText record={r} />
+                          </span>
+                          <span className="flex items-baseline gap-2">
+                            {diff !== null && diff !== 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {diff > 0 ? '▲' : '▼'} {Math.abs(diff)}
+                              </span>
+                            )}
+                            <span className="font-semibold">{r.weightKg}kg</span>
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
+          </>
         )}
       </div>
     </div>
