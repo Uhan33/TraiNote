@@ -21,6 +21,16 @@ export class WorkoutLogRepository extends BaseRepository<WorkoutLog> {
       .getMany();
   }
 
+  // 작성 완료 전 일지 — 회원에게 안 보이는 상태 (최신순, 회원 함께 조회)
+  listDrafts(trainerId: string) {
+    return this.repository
+      .createQueryBuilder('w')
+      .innerJoinAndSelect('w.member', 'm')
+      .where('m.trainer_id = :trainerId AND m.disconnected_at IS NULL AND w.completed_at IS NULL', { trainerId })
+      .orderBy('w.log_date', 'DESC')
+      .getMany();
+  }
+
   // 일지가 있는 날짜 목록. memberCode 없으면 전체 회원
   // ponytail: 전체 기간을 한 번에 반환. 수년치가 쌓여 무거워지면 월 단위 범위 파라미터 추가
   async loggedDates(trainerId: string, memberCode?: string) {
@@ -53,6 +63,12 @@ export class WorkoutLogRepository extends BaseRepository<WorkoutLog> {
       order: { logDate: 'DESC' },
       take,
     });
+  }
+
+  // 회원 화면 성장 그래프용 — 작성 완료된 일지 전체 (날짜 오름차순)
+  // ponytail: 전체 기간 일지를 한 번에 읽음. 수년치로 무거워지면 기간 제한이나 집계 쿼리로
+  listCompleted(memberId: string) {
+    return this.find({ where: { memberId, completedAt: Not(IsNull()) }, order: { logDate: 'ASC' } });
   }
 
   // 작성 완료된 일지 수. from~to(포함) 기간, 생략하면 전체

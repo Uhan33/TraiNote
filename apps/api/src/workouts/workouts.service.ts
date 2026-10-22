@@ -3,6 +3,8 @@ import { MembersService } from '../members/members.service.js';
 import { PushService } from '../push/push.service.js';
 import type { SaveWorkoutDto, WorkoutLogDto } from './dto.js';
 import { WorkoutLog } from '../libs/database/entities/workout-log.entity.js';
+import { ExerciseRepository } from '../libs/database/repositories/exercise.repository.js';
+import { strengthSeries } from './strength.js';
 import { WorkoutLogRepository } from '../libs/database/repositories/workout-log.repository.js';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -31,11 +33,18 @@ export class WorkoutsService {
     private readonly workoutLogRepository: WorkoutLogRepository,
     private readonly membersService: MembersService,
     private readonly pushService: PushService,
+    private readonly exerciseRepository: ExerciseRepository,
   ) {}
 
   // 그날 이 트레이너의 모든 회원 일지 (운동일지 목록 화면)
   async listByDate(trainerId: string, date: string) {
     const rows = await this.workoutLogRepository.listByTrainerAndDate(trainerId, assertDate(date));
+    return rows.map((log) => toDto(log, log.member.code));
+  }
+
+  // 작성 완료 전 일지 (운동일지 목록 상단 안내)
+  async listDrafts(trainerId: string) {
+    const rows = await this.workoutLogRepository.listDrafts(trainerId);
     return rows.map((log) => toDto(log, log.member.code));
   }
 
@@ -67,6 +76,13 @@ export class WorkoutsService {
       return;
     }
     await this.workoutLogRepository.upsertByDate(member.id, logDate, { title: dto.title.trim(), memo: dto.memo, exercises: dto.exercises });
+  }
+
+  // 성장 그래프 — 회원 화면과 같은 값 (작성 완료된 일지만)
+  async strength(trainerId: string, memberCode: string) {
+    const member = await this.membersService.findOwned(trainerId, memberCode);
+    const [logs, exercises] = await Promise.all([this.workoutLogRepository.listCompleted(member.id), this.exerciseRepository.listAll()]);
+    return strengthSeries(logs, new Map(exercises.map((e) => [e.name, e.bodyPart])));
   }
 
   // 작성 완료 — 회원 화면에 공개 + 처음 완료할 때만 회원에게 푸시 알림 (완료 후 수정은 다시 알리지 않음)

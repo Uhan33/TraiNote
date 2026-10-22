@@ -4,7 +4,7 @@ import { NavLink, Outlet, useParams } from 'react-router'
 import { Input } from '@/components/ui/input'
 import { useMembersList } from '@/api/generated'
 
-// 체중 (/body) — 모바일: 회원 목록 ↔ 상세 전환 / 태블릿·PC: 좌측 회원 목록 + 우측 체중
+// 성장 (/body) — 모바일: 회원 목록 ↔ 상세 전환 / 태블릿·PC: 좌측 회원 목록 + 우측 체중
 export default function BodyPage() {
   const { memberId } = useParams()
   return (
@@ -27,7 +27,7 @@ function BodyMemberList() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="px-5 pt-6">
-        <h1 className="text-2xl font-bold">체중</h1>
+        <h1 className="text-2xl font-bold">성장</h1>
       </header>
       <div className="px-5 pt-4">
         <div className="relative">

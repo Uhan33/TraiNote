@@ -38,7 +38,7 @@ export default function BodyOverview({ records }: { records: BodyRecordDto[] }) 
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+export function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-muted px-2 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>

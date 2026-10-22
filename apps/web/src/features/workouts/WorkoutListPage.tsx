@@ -1,11 +1,11 @@
-import { ChevronRight, Search } from 'lucide-react'
+import { ChevronRight, EyeOff, Search } from 'lucide-react'
 import { useState } from 'react'
-import { NavLink, useSearchParams } from 'react-router'
+import { Link, NavLink, useSearchParams } from 'react-router'
 import { Input } from '@/components/ui/input'
 import AddMemberButton from './AddMemberButton'
 import DateNav from './DateNav'
-import { useMembersList, useWorkoutsListByDate, useWorkoutsLoggedDates } from '@/api/generated'
-import { PT_LOW, ptLabel, summarize, todayKey } from './data'
+import { useMembersList, useWorkoutsListByDate, useWorkoutsListDrafts, useWorkoutsLoggedDates } from '@/api/generated'
+import { formatDateLabel, PT_LOW, ptLabel, summarize, todayKey } from './data'
 
 export default function WorkoutListPage() {
   const [params, setParams] = useSearchParams()
@@ -15,6 +15,8 @@ export default function WorkoutListPage() {
   const members = useMembersList()
   const logs = useWorkoutsListByDate({ date })
   const dates = useWorkoutsLoggedDates()
+  const drafts = useWorkoutsListDrafts()
+  const nameByCode = new Map(members.data?.map((m) => [m.code, m.name]))
   const logByCode = new Map(logs.data?.map((log) => [log.memberCode, log]))
 
   const rows = (members.data ?? [])
@@ -36,6 +38,29 @@ export default function WorkoutListPage() {
           markedDates={dates.data ?? []}
         />
       </div>
+
+      {!!drafts.data?.length && (
+        <div className="mx-5 mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400">
+            <EyeOff className="size-4" /> 작성 완료 전이라 회원에게 안 보여요
+          </p>
+          <ul className="mt-1">
+            {drafts.data.map((d) => (
+              <li key={`${d.memberCode}-${d.date}`}>
+                <Link to={`/workouts/${d.memberCode}?date=${d.date}`} className="flex items-center justify-between py-1.5 text-sm active:opacity-60">
+                  <span>
+                    <span className="font-medium">{nameByCode.get(d.memberCode) ?? d.memberCode}</span>
+                    <span className="text-muted-foreground"> · {formatDateLabel(d.date)}</span>
+                  </span>
+                  <span className="flex items-center text-muted-foreground">
+                    완료하기 <ChevronRight className="size-4" />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="px-5 pt-3">
         <div className="relative">
@@ -63,9 +88,8 @@ export default function WorkoutListPage() {
                     {member.memo && <span className="truncate text-sm text-muted-foreground">{member.memo}</span>}
                   </span>
                   <span className="block truncate text-sm text-muted-foreground">
-                    {workout && summary
-                      ? `${workout.completedAt ? '' : '작성 중 · '}${workout.title || '운동'} · ${summary.exerciseCount}개 운동 · ${summary.setCount}세트`
-                      : '작성 전'}
+                    {workout && !workout.completedAt && <span className="font-medium text-amber-700 dark:text-amber-400">완료 전 · </span>}
+                    {workout && summary ? `${workout.title || '운동'} · ${summary.exerciseCount}개 운동 · ${summary.setCount}세트` : '작성 전'}
                   </span>
                 </span>
                 {member.ptRemaining !== null && (

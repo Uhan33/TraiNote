@@ -4,7 +4,9 @@ import { Member } from '../libs/database/entities/member.entity.js';
 import { MemberRepository } from '../libs/database/repositories/member.repository.js';
 import { MembersService } from '../members/members.service.js';
 import { FailureLimiter } from '../libs/security/failure-limiter.js';
+import { ExerciseRepository } from '../libs/database/repositories/exercise.repository.js';
 import { WorkoutLogRepository } from '../libs/database/repositories/workout-log.repository.js';
+import { strengthSeries } from '../workouts/strength.js';
 import { assertDate } from '../workouts/workouts.service.js';
 import type { MemberViewDto, MemberViewWorkoutDto } from './dto.js';
 import type { MemberTokenPayload } from './member-auth.guard.js';
@@ -18,6 +20,7 @@ export class MemberViewService {
     private readonly memberRepository: MemberRepository,
     private readonly membersService: MembersService,
     private readonly workoutLogRepository: WorkoutLogRepository,
+    private readonly exerciseRepository: ExerciseRepository,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -56,5 +59,11 @@ export class MemberViewService {
   async workouts(member: Member, before?: string): Promise<MemberViewWorkoutDto[]> {
     const rows = await this.workoutLogRepository.listRecentCompleted(member.id, PAGE_SIZE, before && assertDate(before));
     return rows.map(({ logDate, title, memo, exercises }) => ({ date: logDate, title, memo, exercises }));
+  }
+
+  // 성장 그래프 — 작성 완료된 일지의 종목별 최고 중량 추이
+  async strength(member: Member) {
+    const [logs, exercises] = await Promise.all([this.workoutLogRepository.listCompleted(member.id), this.exerciseRepository.listAll()]);
+    return strengthSeries(logs, new Map(exercises.map((e) => [e.name, e.bodyPart])));
   }
 }

@@ -7,6 +7,7 @@ import { BodyRecordDto } from '../body/dto.js';
 import type { Member } from '../libs/database/entities/member.entity.js';
 import { MemberSessionDto, MemberViewDto, MemberViewWorkoutDto, PushKeyDto } from './dto.js';
 import { PushSubscriptionDto } from '../push/dto.js';
+import { StrengthSeriesDto } from '../workouts/dto.js';
 import { CurrentMember, MEMBER_COOKIE, MemberAuthGuard } from './member-auth.guard.js';
 import { MEMBER_SESSION_DAYS, MemberViewService, PAGE_SIZE } from './member-view.service.js';
 import { PushService } from '../push/push.service.js';
@@ -66,6 +67,14 @@ export class MemberViewController {
   @ApiUnauthorizedResponse()
   workouts(@CurrentMember() member: Member, @Query('before') before?: string) {
     return this.memberViewService.workouts(member, before);
+  }
+
+  @Get('me/strength')
+  @UseGuards(MemberAuthGuard)
+  @ApiOkResponse({ type: [StrengthSeriesDto], description: '종목별 최고 중량 추이 — 2일 이상 기록된 종목, 기록 많은 순' })
+  @ApiUnauthorizedResponse()
+  strength(@CurrentMember() member: Member) {
+    return this.memberViewService.strength(member);
   }
 
   @Get('me/body-records')

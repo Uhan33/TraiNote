@@ -24,3 +24,9 @@ export function metricSummary(points: MetricPoint[], unit: string) {
   const changeUnit = unit === '%' ? '%p' : unit
   return { first: `${first}${unit}`, last: `${last}${unit}`, change: `${change > 0 ? '+' : ''}${change}${changeUnit}` }
 }
+
+export type GrowthView = 'strength' | 'body'
+
+// 성장 화면 첫 보기 — 고르기 전(picked null)에는 운동 그래프가 있으면 운동, 없고 체중 기록만 있으면 체중
+export const growthView = (picked: GrowthView | null, hasStrength: boolean, hasBody: boolean): GrowthView =>
+  picked ?? (!hasStrength && hasBody ? 'body' : 'strength')

@@ -56,6 +56,17 @@ export class SaveWorkoutDto {
   exercises: ExerciseDto[];
 }
 
+export class StrengthPointDto {
+  @ApiProperty({ example: '2026-10-17' }) date: string;
+  @ApiProperty({ example: 60, description: '그날 이 종목의 최고 중량(kg)' }) value: number;
+}
+
+export class StrengthSeriesDto {
+  @ApiProperty({ example: '스쿼트' }) name: string;
+  @ApiProperty({ type: String, nullable: true, example: '하체', description: '부위. null = 기본 종목에 없는 이름(직접 입력)' }) bodyPart: string | null;
+  @ApiProperty({ type: [StrengthPointDto], description: '날짜 오름차순' }) points: StrengthPointDto[];
+}
+
 export class WorkoutLogDto extends SaveWorkoutDto {
   @ApiProperty({ example: 'K7Q2XA' }) memberCode: string;
   @ApiProperty({ example: '2026-10-17' }) date: string;

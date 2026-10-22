@@ -49,6 +49,9 @@ describe('member view (e2e)', () => {
     await trainer.post(`/api/v1/members/${member.code}/workouts/2026-10-20/complete`).expect(404);
     const { body: logs } = await trainer.get('/api/v1/workouts?date=2026-10-12').expect(200);
     expect(logs[0].completedAt).toBeNull();
+    // 작성 완료 전 일지 목록 — 12일만
+    const { body: drafts } = await trainer.get('/api/v1/workouts/drafts').expect(200);
+    expect(drafts.map((l: { date: string }) => l.date)).toEqual(['2026-10-12']);
 
     const http = request(app.getHttpServer());
     await http.get('/api/v1/member/me?month=2026-10').expect(401);
@@ -69,6 +72,13 @@ describe('member view (e2e)', () => {
     expect(page1[0]).toEqual({ date: '2026-10-11', title: '11일', memo: '코멘트', exercises: [{ name: '스쿼트', sets: [{ kg: 60, reps: 10, done: true }] }] });
     const page2 = (await http.get(`/api/v1/member/me/workouts?before=${page1.at(-1).date}`).set('Cookie', memberToken).expect(200)).body;
     expect(page2.map((l: { date: string }) => l.date)).toEqual(['2026-10-01']);
+
+    // 성장 그래프 — 완료된 일지만 (12일 작성 중 제외)
+    const strength = (await http.get('/api/v1/member/me/strength').set('Cookie', memberToken).expect(200)).body;
+    expect(strength).toHaveLength(1);
+    expect(strength[0]).toMatchObject({ name: '스쿼트', bodyPart: '하체' });
+    expect(strength[0].points).toHaveLength(11);
+    expect((await trainer.get(`/api/v1/members/${member.code}/strength`).expect(200)).body).toEqual(strength);
 
     // 알림 구독: 알려진 푸시 서비스 주소만
     const keys = { p256dh: 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM', auth: 'tBHItJI5svbpez7KI4CCXg' };
