@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig, type Plugin } from 'vite'
+import { createServer, defineConfig, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
@@ -28,6 +28,39 @@ const memberHtml = (): Plugin => {
   }
 }
 
+// 랜딩(/) 을 미리 그린 HTML(landing.html) — 검색 로봇(특히 JS 실행이 약한 네이버)이 내용을 읽게 (Caddy 가 / → landing.html)
+// index.html 에 넣지 않는 이유: 다른 화면(/workouts 등)도 index.html 을 받으므로 로딩 중 랜딩이 비침
+const landingHtml = (): Plugin => {
+  let outDir = 'dist'
+  return {
+    name: 'landing-html',
+    apply: 'build',
+    enforce: 'post',
+    configResolved: (config) => void (outDir = path.resolve(config.root, config.build.outDir)),
+    async closeBundle() {
+      const server = await createServer({
+        configFile: false,
+        root: import.meta.dirname,
+        logLevel: 'error',
+        appType: 'custom',
+        server: { middlewareMode: true, hmr: false },
+        define: { __APP_VERSION__: JSON.stringify(version) },
+        resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
+        plugins: [react()],
+      })
+      try {
+        const { render } = (await server.ssrLoadModule('/src/features/landing/prerender.tsx')) as { render: () => string }
+        const index = readFileSync(path.join(outDir, 'index.html'), 'utf8')
+        const placeholder = '<div id="root"><div class="splash">TraiNote</div></div>'
+        if (!index.includes(placeholder)) this.error('landing.html: index.html 에서 root 를 찾지 못함')
+        writeFileSync(path.join(outDir, 'landing.html'), index.replace(placeholder, `<div id="root">${render()}</div>`))
+      } finally {
+        await server.close()
+      }
+    },
+  }
+}
+
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
@@ -39,6 +72,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     memberHtml(),
+    landingHtml(),
     VitePWA({
       registerType: 'autoUpdate',
       // 서비스 워커가 모든 화면 이동에 index.html(트레이너 manifest)을 주지 않도록 회원 화면은 서버(member.html)로

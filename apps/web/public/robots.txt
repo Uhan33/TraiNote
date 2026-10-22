@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /member
+Disallow: /workouts
+Disallow: /body
+Disallow: /settings
+
+Sitemap: https://trainote.kr/sitemap.xml
