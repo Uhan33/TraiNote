@@ -18,6 +18,15 @@
 		reverse_proxy api:4000
 	}
 
+	# 랜딩 — 빌드 때 미리 그린 HTML (검색 노출)
+	@home path /
+	handle @home {
+		root * /srv
+		header Cache-Control "no-cache"
+		rewrite * /landing.html
+		file_server
+	}
+
 	# 회원 화면 — 회원 앱 manifest 가 연결된 member.html (홈 화면 추가 시 /member 로 열리게)
 	@member path /member /member/*
 	handle @member {
