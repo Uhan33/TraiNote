@@ -12,6 +12,7 @@ export class MemberSessionDto {
 
 // 회원 본인에게 보이는 정보만. 트레이너 전용 회원 메모(member.memo)·코드는 포함하지 않음
 export class MemberViewDto {
+  @ApiProperty({ description: '회원 코드 — 다른 브라우저·홈 화면 앱에서 다시 입장할 때 필요' }) code: string;
   @ApiProperty() name: string;
   @ApiProperty() trainerName: string;
   @ApiProperty({ description: 'month(YYYY-MM) 의 운동 횟수' }) monthCount: number;

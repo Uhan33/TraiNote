@@ -6,7 +6,7 @@ import { MemberRepository } from '../libs/database/repositories/member.repositor
 import { PushSubscriptionRepository } from '../libs/database/repositories/push-subscription.repository.js';
 import type { CreateMemberWithPtDto, MemberDto, UpdateMemberDto } from './dto.js';
 
-// 남은 PT 횟수 = 지정한 횟수 - 그 이후 새로 작성된 운동일지 수. null = 횟수 관리 안 함
+// 남은 PT 횟수 = 지정한 횟수 - 그 이후 새로 작성돼 작성 완료된 운동일지 수. null = 횟수 관리 안 함
 const ptRemaining = ({ ptTotal }: Member, used = 0) => (ptTotal === null ? null : ptTotal - used);
 
 const toDto = (member: Member, used?: number): MemberDto => ({

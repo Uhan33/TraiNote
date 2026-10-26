@@ -37,7 +37,7 @@ export class MemberRepository extends BaseRepository<Member> {
     await this.update({ id }, { disconnectedAt: new Date() });
   }
 
-  // 회원별 PT 차감 횟수 = pt_counted_since 이후 새로 작성된 운동일지 수. 횟수 관리 중인 회원만 한 번에 집계
+  // 회원별 PT 차감 횟수 = pt_counted_since 이후 새로 작성돼 작성 완료된 운동일지 수. 횟수 관리 중인 회원만 한 번에 집계
   async countPtUsed(members: Member[]) {
     const ids = members.filter((m) => m.ptCountedSince).map((m) => m.id);
     if (!ids.length) return new Map<string, number>();
@@ -48,6 +48,7 @@ export class MemberRepository extends BaseRepository<Member> {
       .addSelect('count(*)::int', 'used')
       .where('l.member_id IN (:...ids)', { ids })
       .andWhere('l.created_at > m.pt_counted_since')
+      .andWhere('l.completed_at IS NOT NULL')
       .groupBy('l.member_id')
       .getRawMany<{ id: string; used: number }>();
     return new Map(rows.map((r) => [r.id, r.used]));

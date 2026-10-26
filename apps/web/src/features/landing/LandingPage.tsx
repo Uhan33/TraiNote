@@ -85,7 +85,7 @@ export default function LandingPage() {
                 그날 한 운동과 세트, 트레이너가 남긴 한마디를 언제든 다시 봐요.
               </Point>
               <Point icon={<KeyRound />} title="가입 없이 코드 하나로">
-                6자리 코드만 입력하면 끝. 이름 외 개인정보는 받지 않아요.
+                회원은 트레이너가 보낸 6자리 코드만 입력하면 끝. 따로 가입하거나 비밀번호를 만들 필요가 없어요.
               </Point>
             </ul>
           </div>
@@ -120,7 +120,13 @@ export default function LandingPage() {
             <Faq q="아이폰에서도 알림을 받을 수 있나요?">
               iOS 16.4 이상에서 사파리로 열어 홈 화면에 추가하면 받을 수 있어요. 안드로이드는 크롬·삼성 인터넷에서 홈 화면에 추가하면 돼요.
             </Faq>
-            <Faq q="회원 개인정보는 무엇을 받나요?">이름만 받아요. 트레이너가 남긴 메모는 트레이너에게만 보여요.</Faq>
+            <Faq q="회원 개인정보는 무엇을 받나요?">
+              회원에게 직접 받는 정보는 없어요. 트레이너가 입력한 이름·운동일지·체중·체성분 기록만 저장하고, 트레이너 메모는 트레이너에게만 보여요. 자세한 내용은{' '}
+              <Link to="/privacy" className="underline underline-offset-2">
+                개인정보처리방침
+              </Link>
+              에 있어요.
+            </Faq>
             <Faq q="PC나 태블릿에서도 쓸 수 있나요?">네. 브라우저로 열면 돼요. 태블릿·PC에서는 회원 목록과 일지를 나란히 보여 줘요.</Faq>
           </div>
         </section>
@@ -144,7 +150,12 @@ export default function LandingPage() {
       <footer className="border-t">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-5 py-6 text-sm text-muted-foreground">
           <span>© TraiNote 트레이노트 · PT 회원 운동일지</span>
-          <span>v{__APP_VERSION__}</span>
+          <span className="flex gap-4">
+            <Link to="/privacy" className="font-semibold text-foreground">
+              개인정보처리방침
+            </Link>
+            <span>v{__APP_VERSION__}</span>
+          </span>
         </div>
       </footer>
     </div>
