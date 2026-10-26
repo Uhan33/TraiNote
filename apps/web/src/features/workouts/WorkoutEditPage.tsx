@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, CircleCheck, ChevronLeft, History, Minus, Plus, Search, Trash2 } from 'lucide-react'
-import { useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { useBlocker, useNavigate, useParams, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { ApiError } from '@/api/fetcher'
 import {
   getWorkoutsGetQueryKey,
   getWorkoutsListByDateQueryKey,
+  getMembersListQueryKey,
   getWorkoutsListDraftsQueryKey,
   useExercisesList,
   useMembersList,
@@ -24,6 +25,7 @@ import CopyId from './CopyId'
 import DateNav from './DateNav'
 import MemberMenu from './MemberMenu'
 import { EMPTY_FORM, formatDateLabel, groupExercises, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
+import { backupKey, readBackup } from './backup'
 import { useAutosave, type SaveStatus } from './useAutosave'
 
 export default function WorkoutEditPage() {
@@ -35,19 +37,26 @@ export default function WorkoutEditPage() {
   const member = members.data?.find((m) => m.code === code.toUpperCase())
   const dates = useWorkoutsMemberLoggedDates(code, { query: { enabled: !!member } })
   const queryClient = useQueryClient()
-  // 작성 완료 전 일지를 두고 나가려 하면 한 번 확인 (뒤로가기·날짜 이동)
-  const [leave, setLeave] = useState<(() => void) | null>(null)
-  const guard = (go: () => void) => {
+  // 편집기의 저장 상태 — 저장 실패 중에 나가려 하면 알려 줌
+  const saveStatus = useRef<SaveStatus>('saved')
+  // 저장 실패 중이거나 작성 완료 전 일지를 두고 나가려 하면 한 번 확인 (뒤로가기 버튼·제스처, 날짜·탭 이동 모두)
+  const [leaveReason, setLeaveReason] = useState<'unsaved' | 'draft'>('draft')
+  const blocker = useBlocker(({ currentLocation: from, nextLocation: to }) => {
+    if (from.pathname === to.pathname && from.search === to.search) return false
+    if (saveStatus.current === 'error') {
+      setLeaveReason('unsaved')
+      return true
+    }
     const log = member && queryClient.getQueryData<WorkoutLogDto>(getWorkoutsGetQueryKey(member.code, date))
-    if (log && !log.completedAt) setLeave(() => go)
-    else go()
-  }
+    setLeaveReason('draft')
+    return !!log && !log.completedAt
+  })
 
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="flex h-14 max-w-2xl items-center gap-1 px-2 lg:px-6">
-          <Button variant="ghost" size="icon-lg" aria-label="회원 목록" className="md:hidden" onClick={() => guard(() => navigate(`/workouts?date=${date}`))}>
+          <Button variant="ghost" size="icon-lg" aria-label="회원 목록" className="md:hidden" onClick={() => navigate(`/workouts?date=${date}`)}>
             <ChevronLeft className="size-6" />
           </Button>
           <span className="text-lg font-semibold">{member?.name ?? (members.isPending ? '' : '회원 없음')}</span>
@@ -56,34 +65,38 @@ export default function WorkoutEditPage() {
         </div>
         {member && (
           <div className="max-w-2xl px-3 pb-2 lg:px-5">
-            <DateNav value={date} onChange={(d) => guard(() => setParams({ date: d }, { replace: true }))} markedDates={dates.data ?? []} />
+            <DateNav value={date} onChange={(d) => setParams({ date: d }, { replace: true })} markedDates={dates.data ?? []} />
           </div>
         )}
       </header>
 
-      <Drawer open={!!leave} onOpenChange={(o) => !o && setLeave(null)}>
+      <Drawer open={blocker.state === 'blocked'} onOpenChange={(o) => !o && blocker.reset?.()}>
         <DrawerContent className="mx-auto max-w-md">
-          <DrawerHeader>
-            <DrawerTitle>아직 작성 완료 전이에요</DrawerTitle>
-            <p className="text-sm text-muted-foreground">
-              작성한 내용은 저장돼 있어요.
-              <br />
-              <span className="font-semibold text-foreground">작성 완료</span>를 눌러야 회원에게 일지가 보여요.
-            </p>
-          </DrawerHeader>
+          {leaveReason === 'unsaved' ? (
+            <DrawerHeader>
+              <DrawerTitle>아직 저장하지 못했어요</DrawerTitle>
+              <p className="text-sm text-muted-foreground">
+                인터넷 연결이 불안정해요.
+                <br />
+                작성한 내용은 이 기기에 보관해 두었다가 연결되면 자동으로 저장해요.
+              </p>
+            </DrawerHeader>
+          ) : (
+            <DrawerHeader>
+              <DrawerTitle>아직 작성 완료 전이에요</DrawerTitle>
+              <p className="text-sm text-muted-foreground">
+                작성한 내용은 저장돼 있어요.
+                <br />
+                <span className="font-semibold text-foreground">작성 완료</span>를 눌러야 회원에게 일지가 보여요.
+              </p>
+            </DrawerHeader>
+          )}
           <div className="flex flex-col gap-2 px-4 pb-6">
-            <Button className="h-12 rounded-xl text-base" onClick={() => setLeave(null)}>
+            <Button className="h-12 rounded-xl text-base" onClick={() => blocker.reset?.()}>
               계속 작성하기
             </Button>
-            <Button
-              variant="ghost"
-              className="h-12 rounded-xl text-base text-muted-foreground"
-              onClick={() => {
-                leave?.()
-                setLeave(null)
-              }}
-            >
-              나중에 완료할게요
+            <Button variant="ghost" className="h-12 rounded-xl text-base text-muted-foreground" onClick={() => blocker.proceed?.()}>
+              {leaveReason === 'unsaved' ? '나갈게요' : '나중에 완료할게요'}
             </Button>
           </div>
         </DrawerContent>
@@ -91,33 +104,54 @@ export default function WorkoutEditPage() {
 
       {members.isSuccess && !member && <p className="py-16 text-center text-muted-foreground">회원을 찾을 수 없어요</p>}
       {/* key: 회원·날짜가 바뀌면 편집 상태를 새로 로드 */}
-      {member && <WorkoutLoader key={`${member.code}-${date}`} member={member} date={date} />}
+      {member && (
+        <WorkoutLoader
+          key={`${member.code}-${date}`}
+          member={member}
+          date={date}
+          onStatus={(s) => {
+            saveStatus.current = s
+          }}
+        />
+      )}
     </div>
   )
 }
 
+type EditorProps = { member: MemberDto; date: string; onStatus: (status: SaveStatus) => void }
+
 // 서버 일지를 불러온 뒤 편집기 표시. 404 = 그날 일지 없음 → 빈 편집기
-function WorkoutLoader({ member, date }: { member: MemberDto; date: string }) {
-  const log = useWorkoutsGet(member.code, date, { query: { retry: false, staleTime: Infinity } })
+// 열 때마다 서버에서 새로 받음 — 다른 기기에서 고친 내용을 옛 화면으로 덮어쓰지 않게
+// 이 기기에 저장 못 한 보관본이 있으면 그걸로 이어서 작성 (연결이 끊겨 못 불러와도)
+// 편집기를 한 번 띄운 뒤에는 다시 불러오기가 실패해도 그대로 유지 — 작성 중인 내용이 사라지지 않게
+function WorkoutLoader(props: EditorProps) {
+  const { member, date } = props
+  const log = useWorkoutsGet(member.code, date, { query: { retry: false, refetchOnWindowFocus: false } })
   const error: unknown = log.error
   const notFound = error instanceof ApiError && error.status === 404
+  const [backup] = useState(() => readBackup(backupKey(member.code, date)))
+  const [start, setStart] = useState<{ initial: WorkoutForm; completedAt: string | null } | null>(null)
 
-  if (log.isPending) return <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
-  if (log.isError && !notFound) return <p className="py-16 text-center text-destructive">일지를 불러오지 못했어요</p>
-  return (
-    <WorkoutEditor member={member} date={date} initial={log.data ? toForm(log.data) : EMPTY_FORM} initialCompletedAt={log.data?.completedAt ?? null} />
-  )
+  if (!start) {
+    if (!log.isFetchedAfterMount && !log.isError) return <p className="py-16 text-center text-muted-foreground">불러오는 중…</p>
+    if (log.isError && !notFound && !backup) return <p className="py-16 text-center text-destructive">일지를 불러오지 못했어요</p>
+    const server = notFound ? undefined : log.data
+    setStart({ initial: backup ?? (server ? toForm(server) : EMPTY_FORM), completedAt: server?.completedAt ?? null })
+    return null
+  }
+  return <WorkoutEditor {...props} initial={start.initial} restored={!!backup} initialCompletedAt={start.completedAt} />
 }
 
 function WorkoutEditor({
   member,
   date,
+  onStatus,
   initial,
+  restored,
   initialCompletedAt,
-}: {
-  member: MemberDto
-  date: string
+}: EditorProps & {
   initial: WorkoutForm
+  restored: boolean
   initialCompletedAt: string | null
 }) {
   const queryClient = useQueryClient()
@@ -151,7 +185,16 @@ function WorkoutEditor({
         typeof q.queryKey[0] === 'string' &&
         ((q.queryKey[0].includes('/workouts/') && q.queryKey[0] !== key[0]) || q.queryKey[0] === '/api/v1/members'),
     })
-  })
+  }, backupKey(member.code, date))
+
+  useEffect(() => {
+    onStatus(autosave.status)
+  }, [onStatus, autosave.status])
+  // 이 기기에 남은 보관본으로 열었으면 바로 서버에 저장
+  const { queue } = autosave
+  useEffect(() => {
+    if (restored) queue(initial)
+  }, [restored, initial, queue])
 
   // 남은 변경을 먼저 저장한 뒤 완료 처리 — 회원은 마지막 내용까지 받음
   const complete = async () => {
@@ -169,6 +212,8 @@ function WorkoutEditor({
       queryClient.setQueryData<WorkoutLogDto[]>(getWorkoutsListDraftsQueryKey(), (list) =>
         list?.filter((l) => l.memberCode !== member.code || l.date !== date),
       )
+      // 작성 완료한 일지부터 PT 1회 차감 — 남은 횟수 갱신
+      void queryClient.invalidateQueries({ queryKey: getMembersListQueryKey() })
     } catch {
       setCompleteError(true)
     } finally {

@@ -68,6 +68,13 @@ export default function SignupPage() {
         <Button type="submit" className="mt-2 h-12 rounded-xl text-base" disabled={signup.isPending}>
           가입하고 시작하기
         </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          가입하면{' '}
+          <Link to="/privacy" target="_blank" className="underline underline-offset-2">
+            개인정보처리방침
+          </Link>
+          에 동의하게 돼요
+        </p>
       </form>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         이미 계정이 있나요?{' '}

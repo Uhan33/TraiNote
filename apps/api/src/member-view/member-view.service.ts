@@ -52,7 +52,7 @@ export class MemberViewService {
       this.workoutLogRepository.countCompletedByMember(member.id),
       this.membersService.ptRemaining(member),
     ]);
-    return { name: member.name, trainerName: member.trainer.name, monthCount, totalCount, ptRemaining };
+    return { code: member.code, name: member.name, trainerName: member.trainer.name, monthCount, totalCount, ptRemaining };
   }
 
   // 최신순 PAGE_SIZE 개. before(YYYY-MM-DD) 보다 이전만 — 무한 스크롤 커서

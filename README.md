@@ -59,7 +59,7 @@ pnpm deploy:prod      # 맥에서: 서버가 main 최신 코드를 받아 빌드
 - **요청 제한** (봇·대입 공격): IP 당 전체 1분 300회 · 로그인/가입/회원 코드 1분 10회 · 문의 1시간 10회
   - 아이디별 로그인 15분에 10번 실패 → 그 아이디 15분 잠금, 회원 코드 전체(모든 IP 합산) 1분에 30번 실패 → 1분간 코드 입장 중지 (`MEMBER_CODE_FAIL_LIMIT`)
   - 잠기면 로그에 `login_locked` / `member_code_locked` 경고 — 서버 메모리 기준이라 배포(재시작) 시 초기화
-- **알림 메일** (SNS `trainote-alerts` → typhoid33@naver.com): 백업 실패, 디스크 80% 초과(`deploy/check-disk.sh`, 서버 cron 매시간). 직접 보내기: `deploy/alert.sh "제목" "내용"`
+- **알림 메일** (SNS `trainote-alerts` → typhoid33@naver.com): 백업 실패, 디스크 80% 초과(`deploy/check-disk.sh`, 서버 cron 매시간), 서버 오류 5xx(`deploy/check-errors.sh`, 서버 cron 5분마다 · 30분에 한 번만). 직접 보내기: `deploy/alert.sh "제목" "내용"`
 - 로그: 서버 journald 에 보관 (배포해도 유지, 최대 1GB·30일 — `/etc/systemd/journald.conf.d/trainote.conf`)
   - API: `ssh trainote 'journalctl -t trainote-api -o cat --since today'` — 요청마다 JSON 1줄: `at`(한국 시간)·`method`·`path`·`status`·`ms`·`ip`·`ua`·`trainerId`/`memberId` (회원 코드는 남기지 않음, `/api/health` 제외)
   - 웹(Caddy) 접근 로그(모든 요청): `ssh trainote 'journalctl -t trainote-web -o cat --since today'`
@@ -99,6 +99,15 @@ update inquiry set answer = '답변 내용', answered_at = now() where id = '<�
 
 category: `usage` 사용 방법 · `bug` 오류 신고 · `feature` 기능 제안 · `etc` 기타
 
+## 회원 삭제 되돌리기 (운영)
+
+트레이너가 회원을 삭제하면 `member.disconnected_at` 만 채워지고 기록은 남는다. DB 접속 후:
+
+```sql
+select id, name, code, disconnected_at from member where trainer_id = (select id from trainer where login_id = '<아이디>') and disconnected_at is not null;
+update member set disconnected_at = null where id = '<회원 id>';   -- 복구 (기존 코드 그대로, 알림 구독은 다시 받아야 함)
+```
+
 ## 운동 종목 관리 (운영)
 
 운동 추가 창의 기본 종목은 `exercise` 테이블 — 재배포 없이 위 DB 접속 후 SQL 로 관리.
@@ -117,8 +126,10 @@ select body_part, name from exercise order by body_part, name;                  
 ## 운동일지 작성 완료 · 회원 알림
 
 - 일지는 2초마다 자동 저장되지만 **작성 완료**를 눌러야 회원 화면에 보인다 (`workout_log.completed_at`). 완료 후 수정은 회원 화면에 바로 반영.
+- 저장 못 한 내용은 기기 localStorage(`trainote.unsaved:<코드>:<날짜>`)에 보관 → 10초마다 재시도, 다시 열면 복원, 트레이너 화면이 열려 있으면 30초마다·인터넷 연결 복구 때 대신 저장 (`features/workouts/backup.ts`).
+- 남은 PT 횟수는 횟수를 정한 뒤 새로 작성돼 **작성 완료된** 일지만 1회씩 차감.
 - 처음 완료할 때만 회원에게 웹 푸시 알림 (다시 완료·수정해도 재발송 없음).
-- 회원은 홈 화면 앱(아이폰 iOS 16.4+)에서 운동일지 화면의 **알림 받기**로 구독 → `push_subscription`. 코드 재발급·연결 해제 시 삭제.
+- 회원은 홈 화면 앱(아이폰 iOS 16.4+)을 처음 열 때 알림 동의 화면, 이후 내 정보 > 알림 설정으로 구독 → `push_subscription`. 코드 재발급·연결 해제 시 삭제. 브라우저·카카오톡 안에서는 받을 수 없어 안내만 표시.
 - 발송은 브라우저 회사 푸시 서버(Apple·Google 등)로 — 비용 없음. 키는 `deploy/.env` 의 `VAPID_PUBLIC_KEY`·`VAPID_PRIVATE_KEY` (없으면 알림만 꺼짐, 바꾸면 기존 구독이 끊김).
 - 트레이너도 홈 화면 앱 첫 실행 시 1회 동의 화면, 내 정보 > 알림 설정 → `trainer_push_subscription`.
   - 문의에 첫 답변이 달리면 그 트레이너 기기로 알림 (답변 수정은 알림 없음).

@@ -96,7 +96,7 @@ describe('members · workouts (e2e)', () => {
     await a.get(`${url}/2026-10-10`).expect(404);
   });
 
-  it('남은 PT 횟수 — 지정 이후 새로 작성된 일지만 1회씩 차감, 수정은 그대로, 삭제하면 복구', async () => {
+  it('남은 PT 횟수 — 지정 이후 새로 작성돼 작성 완료된 일지만 1회씩 차감, 수정은 그대로, 삭제하면 복구', async () => {
     const a = await trainer(ids[2]);
     const log = { title: '', memo: '', exercises: [{ name: '스쿼트', sets: [{ kg: 60, reps: 10, done: true }] }] };
     const { body: member } = await a.post('/api/v1/members').send({ name: '김민지' }).expect(201);
@@ -109,6 +109,9 @@ describe('members · workouts (e2e)', () => {
     await a.put(`${url}/workouts/2026-10-02`).send(log).expect(204);
     await a.put(`${url}/workouts/2026-10-02`).send({ ...log, title: '수정' }).expect(204);
     await a.put(`${url}/workouts/2026-10-01`).send({ ...log, title: '수정' }).expect(204);
+    expect(await remaining()).toBe(10); // 작성 완료 전 — 차감 안 함
+    await a.post(`${url}/workouts/2026-10-02/complete`).expect(204);
+    await a.post(`${url}/workouts/2026-10-02/complete`).expect(204);
     expect(await remaining()).toBe(9);
 
     await a.put(`${url}/workouts/2026-10-02`).send({ ...log, exercises: [] }).expect(204);

@@ -21,6 +21,24 @@ window.addEventListener('beforeinstallprompt', (e) => {
 // iPadOS 는 Mac 으로 표시되므로 터치 여부로 구분
 const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
 const isTouch = () => matchMedia('(pointer: coarse)').matches
+const isKakao = () => /KAKAOTALK/i.test(navigator.userAgent)
+
+// 카카오톡 인앱 브라우저 — 홈 화면 추가·알림이 안 되고 쿠키도 따로라 기본 브라우저로 열도록 안내 (닫기 없음)
+export function KakaoHint() {
+  if (!isKakao()) return null
+  return (
+    <div className="mx-auto flex max-w-md items-center gap-3 border-b bg-amber-50 px-4 py-2.5 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+      <p className="min-w-0 flex-1 leading-snug">카카오톡 안에서는 홈 화면 추가와 알림이 안 돼요</p>
+      <button
+        type="button"
+        className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+        onClick={() => (window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(window.location.href)}`)}
+      >
+        브라우저로 열기
+      </button>
+    </div>
+  )
+}
 
 function readDismissed() {
   try {
@@ -40,6 +58,7 @@ export default function InstallHint() {
     return () => void listeners.delete(update)
   }, [])
 
+  if (isKakao()) return <KakaoHint />
   if (dismissed || isStandalone() || !isTouch() || (!isIos() && !canPrompt)) return null
 
   const dismiss = () => {
@@ -57,10 +76,10 @@ export default function InstallHint() {
       <p className="min-w-0 flex-1 leading-snug">
         {isIos() ? (
           <>
-            <Share className="inline size-4 -translate-y-0.5" /> 공유 → <b>홈 화면에 추가</b>하면 앱처럼 쓸 수 있어요
+            <Share className="inline size-4 -translate-y-0.5" /> 공유 → <b>홈 화면에 추가</b>하면 앱처럼 쓰고 알림도 받을 수 있어요
           </>
         ) : (
-          '홈 화면에 추가하면 앱처럼 쓸 수 있어요'
+          '홈 화면에 추가하면 앱처럼 쓰고 알림도 받을 수 있어요'
         )}
       </p>
       {!isIos() && (
