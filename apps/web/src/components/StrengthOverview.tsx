@@ -30,7 +30,7 @@ export default function StrengthOverview({ series }: { series: StrengthSeriesDto
     (a, b) => Number(a === OTHER) - Number(b === OTHER) || partRank(a) - partRank(b) || a.localeCompare(b, 'ko'),
   )
   const part = partOf(current)
-  const summary = metricSummary(current.points, 'kg')!
+  const summary = metricSummary(current.points, current.unit)!
 
   return (
     <section className="rounded-2xl border p-4">
@@ -68,7 +68,7 @@ export default function StrengthOverview({ series }: { series: StrengthSeriesDto
         <Stat label="현재" value={summary.last} />
         <Stat label="변화" value={summary.change} />
       </div>
-      <BodyChart points={current.points} unit="kg" label={`${current.name} 최고 중량`} />
+      <BodyChart points={current.points} unit={current.unit} label={`${current.name} 최고 중량`} />
       <p className="mt-2 text-center text-xs text-muted-foreground">날짜별 최고 중량</p>
     </section>
   )

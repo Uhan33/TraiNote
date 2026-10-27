@@ -2,7 +2,8 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGenerat
 import { Member } from './member.entity.js';
 
 export type WorkoutSet = { kg: number | null; reps: number | null; done: boolean };
-export type WorkoutExercise = { name: string; sets: WorkoutSet[] };
+// unit 없으면 kg. 세트의 kg 값은 unit 단위
+export type WorkoutExercise = { name: string; unit?: 'kg' | 'lb'; sets: WorkoutSet[] };
 
 // 회원·날짜당 일지 1개. 운동·세트는 항상 통째로 읽고 쓰므로 jsonb 한 칸에 저장
 // ponytail: 종목별 통계가 느려지면 workout_exercise / workout_set 테이블로 분리

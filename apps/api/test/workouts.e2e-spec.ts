@@ -47,7 +47,7 @@ describe('members · workouts (e2e)', () => {
     const log = {
       title: '하체',
       memo: '',
-      exercises: [{ name: '스쿼트', sets: [{ kg: 60, reps: 10, done: true }, { kg: null, reps: null, done: false }] }],
+      exercises: [{ name: '스쿼트', sets: [{ kg: 60, reps: 10, done: true }, { kg: null, reps: null, done: false }] }, { name: '레그 프레스', unit: 'lb', sets: [{ kg: 200, reps: 12, done: true }] }],
     };
     const url = `/api/v1/members/${member.code}/workouts`;
     await a.put(`${url}/2026-10-10`).send(log).expect(204);
@@ -88,6 +88,7 @@ describe('members · workouts (e2e)', () => {
     await a.put(`${url}/2026-02-31`).send(log).expect(400);
     await a.put(`${url}/2026-10-10`).send({ ...log, exercises: [{ name: '', sets: [] }] }).expect(400);
     await a.put(`${url}/2026-10-10`).send({ ...log, exercises: [{ name: 'x', sets: [{ kg: -1, reps: 1, done: true }] }] }).expect(400);
+    await a.put(`${url}/2026-10-10`).send({ ...log, exercises: [{ name: 'x', unit: 'g', sets: [] }] }).expect(400);
 
     // 삭제(연결 해제) → 목록·일지·날짜에서 사라지고 접근 불가, 기록은 DB 에 보관
     await a.delete(`/api/v1/members/${member.code}`).expect(204);
