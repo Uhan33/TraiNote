@@ -2,7 +2,8 @@ import type { ExerciseCatalogDto, ExerciseDto, SaveWorkoutDto } from '@/api/gene
 
 // 편집 중 입력값은 문자열(입력칸 그대로), 저장할 때 숫자로 변환
 export type FormSet = { kg: string; reps: string; done: boolean }
-export type FormExercise = { name: string; sets: FormSet[] }
+export type Unit = 'kg' | 'lb'
+export type FormExercise = { name: string; unit: Unit; sets: FormSet[] }
 export type WorkoutForm = { title: string; memo: string; exercises: FormExercise[] }
 
 export const EMPTY_FORM: WorkoutForm = { title: '', memo: '', exercises: [] }
@@ -12,6 +13,7 @@ export const toForm = (log: SaveWorkoutDto): WorkoutForm => ({
   memo: log.memo,
   exercises: log.exercises.map((e) => ({
     name: e.name,
+    unit: e.unit ?? 'kg',
     sets: e.sets.map((s) => ({ kg: s.kg?.toString() ?? '', reps: s.reps?.toString() ?? '', done: s.done })),
   })),
 })
@@ -26,9 +28,28 @@ export const toApi = (form: WorkoutForm): SaveWorkoutDto => ({
   memo: form.memo,
   exercises: form.exercises.map((e) => ({
     name: e.name,
+    unit: e.unit,
     sets: e.sets.map((s) => ({ kg: toNumber(s.kg, false), reps: toNumber(s.reps, true), done: s.done })),
   })),
 })
+
+// 종목별로 마지막에 고른 무게 단위 — 이 기기에 기억해 두고 새로 추가할 때 그대로 (lb 기구는 매번 lb)
+const UNIT_KEY = 'trainote.unit:'
+export const lastUnit = (name: string): Unit => {
+  try {
+    return localStorage.getItem(UNIT_KEY + name) === 'lb' ? 'lb' : 'kg'
+  } catch {
+    return 'kg'
+  }
+}
+export const rememberUnit = (name: string, unit: Unit) => {
+  try {
+    if (unit === 'lb') localStorage.setItem(UNIT_KEY + name, unit)
+    else localStorage.removeItem(UNIT_KEY + name)
+  } catch {
+    // 기억 못 해도 이번 일지에는 반영됨
+  }
+}
 
 // 종목 목록은 DB(GET /exercises) — 부위 순서는 여기, 목록에 없는 새 부위는 맨 뒤. 부위 안에서는 가나다순
 const BODY_PARTS = ['가슴', '등', '하체', '어깨', '팔', '코어']

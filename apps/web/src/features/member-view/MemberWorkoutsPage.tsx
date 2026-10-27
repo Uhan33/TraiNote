@@ -122,13 +122,14 @@ function LogCard({ log }: { log: MemberViewWorkoutDto }) {
   )
 }
 
-const setText = (kg: number | null, reps: number | null) => [kg !== null && `${kg}kg`, reps !== null && `${reps}회`].filter(Boolean).join(' × ') || '-'
+const setText = (weight: number | null, unit: string, reps: number | null) =>
+  [weight !== null && `${weight}${unit}`, reps !== null && `${reps}회`].filter(Boolean).join(' × ') || '-'
 
 // 연속으로 같은 세트는 묶어서 한 줄: ["60kg × 10회 · 2세트", "65kg × 8회", "70kg × 6회"]
-function describeSets({ sets }: ExerciseDto) {
+function describeSets({ sets, unit = 'kg' }: ExerciseDto) {
   const groups: { text: string; count: number }[] = []
   for (const s of sets) {
-    const text = setText(s.kg, s.reps)
+    const text = setText(s.kg, unit, s.reps)
     const last = groups.at(-1)
     if (last?.text === text) last.count++
     else groups.push({ text, count: 1 })
