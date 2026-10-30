@@ -4,6 +4,7 @@ export const INQUIRY_CATEGORIES: { value: CreateInquiryDtoCategory; label: strin
   { value: 'usage', label: '사용 방법' },
   { value: 'bug', label: '오류 신고' },
   { value: 'feature', label: '기능 제안' },
+  { value: 'exercise', label: '종목 추가 요청' },
   { value: 'etc', label: '기타' },
 ]
 

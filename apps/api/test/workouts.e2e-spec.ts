@@ -64,6 +64,14 @@ describe('members · workouts (e2e)', () => {
     expect((await a.get(`${url}/dates`).expect(200)).body).toEqual(['2026-10-10', '2026-10-12']);
     expect((await a.get('/api/v1/workouts?date=2026-10-12').expect(200)).body).toHaveLength(1);
 
+    // 직접 입력한 종목 — 기본 종목 제외, 최근 쓴 순, 트레이너별
+    await a.get('/api/v1/exercises/custom').expect(200, []);
+    await a.put(`${url}/2026-10-11`).send({ ...log, exercises: [{ name: '몬스터 글루트', sets: [] }] }).expect(204);
+    await a.put(`${url}/2026-10-12`).send({ ...log, exercises: [...log.exercises, { name: '클램 쉘', sets: [] }] }).expect(204);
+    await a.get('/api/v1/exercises/custom').expect(200, ['클램 쉘', '몬스터 글루트']);
+    await b.get('/api/v1/exercises/custom').expect(200, []);
+    await a.put(`${url}/2026-10-11`).send({ ...log, exercises: [] }).expect(204);
+
     // 운동이 비면 삭제
     await a.put(`${url}/2026-10-12`).send({ ...log, exercises: [] }).expect(204);
     await a.get(`${url}/2026-10-12`).expect(404);

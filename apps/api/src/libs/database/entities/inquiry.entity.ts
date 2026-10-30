@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Trainer } from './trainer.entity.js';
 
-export const INQUIRY_CATEGORIES = ['usage', 'bug', 'feature', 'etc'] as const;
+export const INQUIRY_CATEGORIES = ['usage', 'bug', 'feature', 'exercise', 'etc'] as const;
 export type InquiryCategory = (typeof INQUIRY_CATEGORIES)[number];
 
 // 트레이너 문의. 운영자는 DB 에서 확인·답변 (README 문의 확인) — 트레이너는 내 정보 > 문의 내역에서 답변 확인
@@ -17,7 +17,7 @@ export class Inquiry {
   @JoinColumn({ name: 'trainer_id' })
   trainer: Trainer;
 
-  // usage 사용 방법 · bug 오류 신고 · feature 기능 제안 · etc 기타
+  // usage 사용 방법 · bug 오류 신고 · feature 기능 제안 · exercise 종목 추가 요청 · etc 기타
   @Column({ type: 'varchar', length: 20 })
   category: InquiryCategory;
 

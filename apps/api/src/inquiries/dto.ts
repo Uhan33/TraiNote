@@ -33,7 +33,7 @@ export class AnswerInquiryDto {
 }
 
 export class CreateInquiryDto {
-  @ApiProperty({ enum: INQUIRY_CATEGORIES, description: 'usage 사용 방법 · bug 오류 신고 · feature 기능 제안 · etc 기타' })
+  @ApiProperty({ enum: INQUIRY_CATEGORIES, description: 'usage 사용 방법 · bug 오류 신고 · feature 기능 제안 · exercise 종목 추가 요청 · etc 기타' })
   @IsIn(INQUIRY_CATEGORIES, { message: '문의 유형을 선택하세요' })
   category: InquiryCategory;
 
