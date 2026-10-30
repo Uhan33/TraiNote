@@ -32,9 +32,10 @@ export class TokensService {
 
     if (row.revokedAt) {
       if (await this.isConcurrentRotation(row)) return { accessToken: await this.access(row.trainerId) };
-      // 로그아웃·교체된 토큰 재사용 = 탈취 의심 → 이 트레이너의 모든 기기 로그아웃
-      await this.revokeAll(row.trainerId);
-      throw new UnauthorizedException('보안을 위해 다시 로그인해 주세요');
+      // 이미 교체·폐기된 토큰 = 이 기기만 다시 로그인. 다른 기기는 건드리지 않음 —
+      // iOS 홈 화면 추가 시 Safari 쿠키가 복사돼 두 곳이 같은 토큰을 쓰므로, 전체 로그아웃하면 정상 사용자도 끊기고
+      // 끊긴 기기가 옛 토큰을 보낼 때마다 전체 로그아웃이 연쇄됨
+      throw new UnauthorizedException('로그인이 만료되었습니다');
     }
 
     const next = await this.insert(row.trainerId);

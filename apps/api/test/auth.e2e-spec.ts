@@ -41,7 +41,7 @@ describe('auth (e2e)', () => {
     await app.close();
   });
 
-  it('가입 → me → refresh 교체 → 옛 토큰 재사용 시 전체 로그아웃', async () => {
+  it('가입 → me → refresh 교체 → 옛 토큰 재사용 시 그 요청만 거절', async () => {
     const http = request(app.getHttpServer());
     const signup = await http
       .post('/api/auth/signup')
@@ -67,10 +67,11 @@ describe('auth (e2e)', () => {
     expect(cookie(concurrent, 'trainote_access')).toBeTruthy();
     expect(cookie(concurrent, 'trainote_refresh')).toBeUndefined();
 
-    // 유예 시간이 지난 옛 토큰 재사용 = 탈취 의심 → 새 토큰까지 모두 폐기
+    // 유예 시간이 지난 옛 토큰 재사용 = 그 요청만 401, 새 토큰(다른 기기)은 계속 사용 (iOS 홈 화면 앱 쿠키 복사 대응)
     await ageRevoked();
     await http.post('/api/auth/refresh').set('Cookie', refresh1).expect(401);
-    await http.post('/api/auth/refresh').set('Cookie', refresh2).expect(401);
+    await http.post('/api/auth/refresh').set('Cookie', refresh1).expect(401);
+    await http.post('/api/auth/refresh').set('Cookie', refresh2).expect(204);
   });
 
   it('로그아웃한 리프레시 토큰은 다시 못 씀', async () => {
