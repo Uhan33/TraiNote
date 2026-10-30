@@ -84,6 +84,8 @@
 }
 
 .dark {
+    /* 스크롤바·날짜 입력 등 브라우저 기본 요소도 어둡게 */
+    color-scheme: dark;
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
