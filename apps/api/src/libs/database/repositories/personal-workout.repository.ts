@@ -61,18 +61,16 @@ export class PersonalWorkoutRepository extends BaseRepository<PersonalWorkout> {
     return this.delete({ memberId, logDate });
   }
 
-  // 이 회원이 직접 입력했던 종목 (기본 종목 제외, 최근 쓴 순) — PT 일지·개인운동 모두
+  // 이 회원이 개인운동에 직접 입력했던 종목 (기본 종목 제외, 최근 쓴 순). 트레이너가 PT 일지에 입력한 종목은 넣지 않음 — 트레이너 검색 기록처럼 보이지 않게
   async listCustomExerciseNames(memberId: string) {
     const rows: { name: string }[] = await this.repository.query(
-      `SELECT name FROM (
-         SELECT e->>'name' AS name, w.updated_at FROM personal_workout w CROSS JOIN jsonb_array_elements(w.exercises) e WHERE w.member_id = $1
-         UNION ALL
-         SELECT e->>'name', w.updated_at FROM workout_log w CROSS JOIN jsonb_array_elements(w.exercises) e WHERE w.member_id = $1 AND w.completed_at IS NOT NULL
-       ) t
-       WHERE NOT EXISTS (SELECT 1 FROM exercise x WHERE x.name = t.name)
-       GROUP BY name
-       ORDER BY max(updated_at) DESC
-       LIMIT 100`,
+      `SELECT e->>'name' AS name
+         FROM personal_workout w
+         CROSS JOIN jsonb_array_elements(w.exercises) e
+        WHERE w.member_id = $1 AND NOT EXISTS (SELECT 1 FROM exercise x WHERE x.name = e->>'name')
+        GROUP BY 1
+        ORDER BY max(w.updated_at) DESC
+        LIMIT 100`,
       [memberId],
     );
     return rows.map((r) => r.name);

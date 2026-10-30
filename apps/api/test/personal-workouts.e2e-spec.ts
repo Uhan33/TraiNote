@@ -58,7 +58,9 @@ describe('personal workouts (e2e)', () => {
     expect((await m.get(mine).expect(200)).body).toEqual(list);
     expect((await m.get(`${mine}?before=2026-10-30`).expect(200)).body).toHaveLength(1);
 
-    // 직접 입력한 종목
+    // 직접 입력한 종목 — 개인운동에서 회원이 입력한 것만 (트레이너가 PT 일지에 입력한 종목은 제외)
+    await a.put(`/api/v1/members/${member.code}/workouts/2026-10-20`).send({ title: '', memo: '', exercises: [{ name: '트레이너 직접 입력', sets: [] }] }).expect(204);
+    await a.post(`/api/v1/members/${member.code}/workouts/2026-10-20/complete`).expect(204);
     expect((await m.get('/api/v1/member/me/exercises/custom').expect(200)).body).toEqual(['몬스터 워크']);
     expect((await m.get('/api/v1/member/exercises').expect(200)).body.length).toBeGreaterThan(0);
 
