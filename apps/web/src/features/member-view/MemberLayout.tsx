@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router'
 import { isUnauthorized } from '@/api/fetcher'
 import ConnectionError from '@/components/ConnectionError'
+import Announcement from '@/components/Announcement'
 import AppShell from '@/components/AppShell'
 import { appTabs } from '@/components/tabs'
 import PushConsent from '@/components/PushConsent'
@@ -38,5 +39,14 @@ export default function MemberLayout() {
       />
     )
   }
-  return <AppShell tabs={TABS} userName={profile.data.name} logoutLabel="나가기" onLogout={logout} />
+  return (
+    <>
+      <AppShell tabs={TABS} userName={profile.data.name} logoutLabel="나가기" onLogout={logout} />
+      <Announcement id="member-personal-workout" title="혼자 운동한 것도 기록해 보세요" actionLabel="기록하러 가기" actionTo="/member/personal">
+        PT 없는 날 운동한 종목과 느낀 점을 남길 수 있어요.
+        <br />
+        트레이너가 보고 <span className="font-semibold text-foreground">댓글로 피드백</span>해 드려요.
+      </Announcement>
+    </>
+  )
 }

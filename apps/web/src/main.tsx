@@ -6,8 +6,8 @@ import { RouterProvider } from 'react-router/dom'
 import './index.css'
 import AppLayout, { ComingSoon } from '@/components/AppLayout'
 import ManifestSwitch from '@/components/ManifestSwitch'
+import MemberSplit from '@/components/MemberSplit'
 import BodyDetailPage from '@/features/body/BodyDetailPage'
-import BodyPage from '@/features/body/BodyPage'
 import LoginPage from '@/features/auth/LoginPage'
 import RequireAuth, { GuestOnly } from '@/features/auth/RequireAuth'
 import SignupPage from '@/features/auth/SignupPage'
@@ -17,7 +17,10 @@ import MemberBodyPage from '@/features/member-view/MemberBodyPage'
 import MemberEntryPage from '@/features/member-view/MemberEntryPage'
 import MemberHomeworkPage from '@/features/member-view/MemberHomeworkPage'
 import MemberLayout from '@/features/member-view/MemberLayout'
+import MemberPersonalPage from '@/features/member-view/MemberPersonalPage'
+import MemberPersonalWritePage from '@/features/member-view/MemberPersonalWritePage'
 import NotificationSettings from '@/components/NotificationSettings'
+import NoticesPage from '@/components/NoticesPage'
 import { MEMBER_PUSH, MEMBER_PUSH_DESCRIPTION } from '@/features/member-view/push'
 import { TRAINER_PUSH, TRAINER_PUSH_DESCRIPTION } from '@/features/settings/push'
 import MemberSettingsPage from '@/features/member-view/MemberSettingsPage'
@@ -26,6 +29,7 @@ import AdminInquiriesPage from '@/features/settings/AdminInquiriesPage'
 import InquiriesPage from '@/features/settings/InquiriesPage'
 import InquiryPage from '@/features/settings/InquiryPage'
 import SettingsPage from '@/features/settings/SettingsPage'
+import PersonalDetailPage from '@/features/personal/PersonalDetailPage'
 import WorkoutEditPage from '@/features/workouts/WorkoutEditPage'
 import WorkoutsPage, { NoMemberSelected } from '@/features/workouts/WorkoutsPage'
 
@@ -42,10 +46,13 @@ const router = createBrowserRouter(
         <Route index element={<MemberEntryPage />} />
         <Route element={<MemberLayout />}>
           <Route path="workouts" element={<MemberWorkoutsPage />} />
+          <Route path="personal" element={<MemberPersonalPage />} />
+          <Route path="personal/write" element={<MemberPersonalWritePage />} />
           <Route path="homework" element={<MemberHomeworkPage />} />
           <Route path="meals" element={<ComingSoon />} />
           <Route path="body" element={<MemberBodyPage />} />
           <Route path="settings" element={<MemberSettingsPage />} />
+          <Route path="settings/notices" element={<NoticesPage audience="member" backTo="/member/settings" />} />
           <Route
             path="settings/notifications"
             element={<NotificationSettings audience={MEMBER_PUSH} backTo="/member/settings" description={MEMBER_PUSH_DESCRIPTION} />}
@@ -62,9 +69,13 @@ const router = createBrowserRouter(
             <Route index element={<NoMemberSelected />} />
             <Route path=":memberId" element={<WorkoutEditPage />} />
           </Route>
+          <Route path="personal" element={<MemberSplit title="개인운동" base="/personal" showUnread />}>
+            <Route index element={<NoMemberSelected />} />
+            <Route path=":memberId" element={<PersonalDetailPage />} />
+          </Route>
           <Route path="homework" element={<ComingSoon />} />
           <Route path="meals" element={<ComingSoon />} />
-          <Route path="body" element={<BodyPage />}>
+          <Route path="body" element={<MemberSplit title="성장" base="/body" />}>
             <Route index element={<NoMemberSelected />} />
             <Route path=":memberId" element={<BodyDetailPage />} />
           </Route>
@@ -73,6 +84,7 @@ const router = createBrowserRouter(
             path="settings/notifications"
             element={<NotificationSettings audience={TRAINER_PUSH} backTo="/settings" description={TRAINER_PUSH_DESCRIPTION} />}
           />
+          <Route path="settings/notices" element={<NoticesPage audience="trainer" backTo="/settings" />} />
           <Route path="settings/inquiry" element={<InquiryPage />} />
           <Route path="settings/inquiries" element={<InquiriesPage />} />
           <Route path="settings/admin/inquiries" element={<AdminInquiriesPage />} />

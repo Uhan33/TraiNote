@@ -4,6 +4,10 @@ import { BodyRecord } from './entities/body-record.entity.js';
 import { Exercise } from './entities/exercise.entity.js';
 import { Inquiry } from './entities/inquiry.entity.js';
 import { Member } from './entities/member.entity.js';
+import { NoticeRead } from './entities/notice-read.entity.js';
+import { Notice } from './entities/notice.entity.js';
+import { PersonalWorkoutComment } from './entities/personal-workout-comment.entity.js';
+import { PersonalWorkout } from './entities/personal-workout.entity.js';
 import { PushSubscription } from './entities/push-subscription.entity.js';
 import { RefreshToken } from './entities/refresh-token.entity.js';
 import { TrainerPushSubscription } from './entities/trainer-push-subscription.entity.js';
@@ -17,7 +21,7 @@ try {
   // .env 없음 — 배포 환경은 실제 환경변수 사용
 }
 
-export const entities = [Trainer, RefreshToken, Member, WorkoutLog, BodyRecord, Inquiry, Exercise, PushSubscription, TrainerPushSubscription];
+export const entities = [Trainer, RefreshToken, Member, WorkoutLog, BodyRecord, Inquiry, Exercise, PushSubscription, TrainerPushSubscription, PersonalWorkout, PersonalWorkoutComment, Notice, NoticeRead];
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',

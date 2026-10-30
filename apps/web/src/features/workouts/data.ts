@@ -88,3 +88,18 @@ export const summarize = (exercises: ExerciseDto[]) => ({
 // 남은 PT 횟수 표시 — 3회 이하면 재등록 시점이라 강조
 export const PT_LOW = 3
 export const ptLabel = (n: number) => (n > 0 ? `${n}회 남음` : n === 0 ? '모두 사용' : `${-n}회 초과`)
+
+const setText = (weight: number | null, unit: string, reps: number | null) =>
+  [weight !== null && `${weight}${unit}`, reps !== null && `${reps}회`].filter(Boolean).join(' × ') || '-'
+
+// 연속으로 같은 세트는 묶어서 한 줄: ["60kg × 10회 · 2세트", "65kg × 8회", "70kg × 6회"]
+export function describeSets({ sets, unit = 'kg' }: ExerciseDto) {
+  const groups: { text: string; count: number }[] = []
+  for (const s of sets) {
+    const text = setText(s.kg, unit, s.reps)
+    const last = groups.at(-1)
+    if (last?.text === text) last.count++
+    else groups.push({ text, count: 1 })
+  }
+  return groups.map((g) => (g.count > 1 ? `${g.text} · ${g.count}세트` : g.text))
+}

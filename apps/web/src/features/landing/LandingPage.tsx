@@ -1,4 +1,4 @@
-import { BellRing, ChartLine, ClipboardList, EyeOff, History, KeyRound, MessageSquare, Scale, Send, Smartphone, Ticket, UserPlus } from 'lucide-react'
+import { BellRing, ChartLine, ClipboardList, EyeOff, History, KeyRound, ListPlus, MessageSquare, NotebookPen, Scale, Send, Smartphone, Ticket, UserPlus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { buttonVariants } from '@/components/ui/button'
@@ -32,7 +32,7 @@ export default function LandingPage() {
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
               수업 중에 바로 기록하고 <b className="font-semibold text-foreground">작성 완료</b>를 누르면 회원 폰으로 알림이 가요. 회원은 가입 없이
-              코드 하나로 운동일지와 성장 그래프를 봐요.
+              코드 하나로 운동일지와 성장 그래프를 보고, PT 없는 날 혼자 한 운동도 남겨요.
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
               <Link to="/signup" className={buttonVariants({ size: 'lg', className: 'h-12 rounded-xl px-6 text-base' })}>
@@ -53,7 +53,7 @@ export default function LandingPage() {
             <h2 className="mt-2 text-2xl font-bold md:text-3xl">기록은 수업 중에, 빠르게</h2>
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               <Feature icon={<History />} title="자동 저장 · 지난 기록 불러오기">
-                종목·무게·횟수를 입력하면 바로 저장돼요. 지난 수업을 그대로 불러와 무게만 바꿔 쓰면 끝.
+                종목·무게·횟수를 입력하면 바로 저장돼요. 지난 수업을 그대로 불러와 무게만 바꿔 쓰면 끝. 인터넷이 끊겨도 폰에 보관했다가 다시 저장해요.
               </Feature>
               <Feature icon={<BellRing />} title="작성 완료하면 회원에게 알림">
                 다 쓰고 작성 완료를 누르면 회원 폰으로 "운동일지가 도착했어요" 알림이 가요. 쓰는 중인 일지는 회원에게 안 보여요.
@@ -63,6 +63,12 @@ export default function LandingPage() {
               </Feature>
               <Feature icon={<EyeOff />} title="놓친 일지 알려 주기">
                 작성 완료를 깜빡한 일지는 목록 맨 위에 모아 보여 줘요. 눌러서 바로 마무리할 수 있어요.
+              </Feature>
+              <Feature icon={<NotebookPen />} title="회원 개인운동 확인 · 댓글 피드백">
+                회원이 혼자 운동한 기록이 올라오면 따로 표시돼요. 열어 보고 댓글로 바로 피드백해요.
+              </Feature>
+              <Feature icon={<ListPlus />} title="내가 쓰는 종목 바로 찾기">
+                목록에 없어 직접 입력한 종목은 운동 추가 창 맨 위에 모아 보여 줘요. kg·lb 단위도 종목별로 기억해요.
               </Feature>
             </div>
           </div>
@@ -84,6 +90,9 @@ export default function LandingPage() {
               <Point icon={<MessageSquare />} title="운동일지와 트레이너 코멘트">
                 그날 한 운동과 세트, 트레이너가 남긴 한마디를 언제든 다시 봐요.
               </Point>
+              <Point icon={<NotebookPen />} title="혼자 운동한 날도 기록">
+                PT 없는 날 한 운동과 컨디션을 남기면 트레이너가 보고 댓글로 피드백해 줘요.
+              </Point>
               <Point icon={<KeyRound />} title="가입 없이 코드 하나로">
                 회원은 트레이너가 보낸 6자리 코드만 입력하면 끝. 따로 가입하거나 비밀번호를 만들 필요가 없어요.
               </Point>
@@ -91,8 +100,23 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 사용 방법 */}
+        {/* 개인운동 */}
         <section className="border-t bg-muted/40">
+          <div className="mx-auto grid max-w-5xl items-center gap-12 px-5 py-16 md:grid-cols-2 md:py-20">
+            <div>
+              <p className="text-sm font-semibold text-muted-foreground">개인운동</p>
+              <h2 className="mt-2 text-2xl font-bold md:text-3xl">PT 없는 날도 함께</h2>
+              <p className="mt-4 leading-relaxed text-muted-foreground">
+                회원이 혼자 운동한 종목과 느낀 점을 직접 기록해요. 트레이너는 새로 올라온 기록을 한눈에 보고, 댓글로 자세나 다음 운동을 바로 알려 줘요.
+                수업 사이의 운동까지 이어서 관리할 수 있어요.
+              </p>
+            </div>
+            <PersonalPreview />
+          </div>
+        </section>
+
+        {/* 사용 방법 */}
+        <section className="border-t">
           <div className="mx-auto max-w-5xl px-5 py-16 md:py-20">
             <h2 className="text-2xl font-bold md:text-3xl">시작은 1분이면 충분해요</h2>
             <ol className="mt-8 grid gap-3 md:grid-cols-3">
@@ -121,11 +145,16 @@ export default function LandingPage() {
               iOS 16.4 이상에서 사파리로 열어 홈 화면에 추가하면 받을 수 있어요. 안드로이드는 크롬·삼성 인터넷에서 홈 화면에 추가하면 돼요.
             </Faq>
             <Faq q="회원 개인정보는 무엇을 받나요?">
-              회원에게 직접 받는 정보는 없어요. 트레이너가 입력한 이름·운동일지·체중·체성분 기록만 저장하고, 트레이너 메모는 트레이너에게만 보여요. 자세한 내용은{' '}
+              회원 가입이 없어 연락처 같은 정보는 받지 않아요. 트레이너가 입력한 이름·운동일지·체중·체성분 기록과 회원이 직접 남긴 개인운동 기록·댓글만
+              저장하고, 트레이너 메모는 트레이너에게만 보여요. 자세한 내용은{' '}
               <Link to="/privacy" className="underline underline-offset-2">
                 개인정보처리방침
               </Link>
               에 있어요.
+            </Faq>
+            <Faq q="회원이 혼자 운동한 것도 기록할 수 있나요?">
+              네. 회원 화면의 개인운동 탭에서 종목과 내용을 남길 수 있어요. 담당 트레이너만 볼 수 있고, 댓글로 서로 이야기할 수 있어요. 개인운동은 남은 PT
+              횟수에서 빠지지 않아요.
             </Faq>
             <Faq q="PC나 태블릿에서도 쓸 수 있나요?">네. 브라우저로 열면 돼요. 태블릿·PC에서는 회원 목록과 일지를 나란히 보여 줘요.</Faq>
           </div>
@@ -302,6 +331,38 @@ function GrowthPreview() {
         <polyline points={points} fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
       </svg>
       <p className="pt-1 text-center text-[11px] text-muted-foreground">날짜별 최고 중량</p>
+    </div>
+  )
+}
+
+// 개인운동 미리보기 — 회원 기록 + 트레이너 댓글 (정적 예시)
+function PersonalPreview() {
+  return (
+    <div aria-hidden className="mx-auto w-full max-w-sm rounded-[2rem] border bg-background p-5 shadow-xl">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">10월 30일 (금)</span>
+        <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white">새 기록</span>
+      </div>
+      <ul className="mt-3 flex flex-col gap-1.5 rounded-xl bg-muted p-3 text-xs">
+        <li className="flex justify-between">
+          <span className="font-medium">스쿼트</span>
+          <span className="text-muted-foreground">40kg × 12회 · 3세트</span>
+        </li>
+        <li className="flex justify-between">
+          <span className="font-medium">불가리안 스플릿 스쿼트</span>
+        </li>
+        <li className="flex justify-between">
+          <span className="font-medium">레그 프레스</span>
+          <span className="text-muted-foreground">80kg × 15회 · 2세트</span>
+        </li>
+      </ul>
+      <p className="mt-3 text-sm leading-relaxed">배운 대로 하체 혼자 해봤어요! 불가리안은 왼쪽이 더 힘드네요.</p>
+      <div className="mt-4 border-t pt-3 text-sm">
+        <p>
+          <span className="font-semibold">트레이너</span> <span className="text-xs text-muted-foreground">방금</span>
+        </p>
+        <p className="mt-0.5">잘하셨어요! 불가리안은 왼쪽 먼저 하고 오른쪽 맞춰 주세요 👍</p>
+      </div>
     </div>
   )
 }
