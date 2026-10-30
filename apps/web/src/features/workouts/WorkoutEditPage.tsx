@@ -12,6 +12,7 @@ import {
   getMembersListQueryKey,
   getWorkoutsListDraftsQueryKey,
   useExercisesList,
+  useExercisesListCustom,
   useMembersList,
   useWorkoutsGet,
   useWorkoutsMemberLoggedDates,
@@ -427,6 +428,8 @@ function SetRow({ index, set, onChange }: { index: number; set: FormSet; onChang
   )
 }
 
+const CUSTOM = '직접 입력'
+
 function ExercisePicker({
   open,
   onOpenChange,
@@ -440,7 +443,9 @@ function ExercisePicker({
   const q = query.trim()
   // 종목은 운영자가 가끔 DB 에 추가하는 정도라 한 번 받으면 앱을 다시 열 때까지 재요청 안 함
   const catalog = useExercisesList({ query: { staleTime: Infinity } })
-  const groups = groupExercises(catalog.data ?? [])
+  // 직접 입력했던 종목 — 창 열 때마다 새로 받아 방금 쓴 종목도 보이게. 기본 목록보다 위에
+  const custom = useExercisesListCustom({ query: { enabled: open } })
+  const groups = [[CUSTOM, custom.data ?? []] as [string, string[]], ...groupExercises(catalog.data ?? [])]
     .map(([part, names]) => [part, names.filter((n) => n.includes(q))] as const)
     .filter(([, names]) => names.length > 0)
   const exactMatch = groups.some(([, names]) => names.includes(q))
@@ -474,8 +479,9 @@ function ExercisePicker({
                   key={name}
                   type="button"
                   onClick={() => onPick(name)}
-                  className="flex h-12 w-full items-center rounded-lg px-2 text-left text-base active:bg-muted"
+                  className="flex h-12 w-full items-center gap-2 rounded-lg px-2 text-left text-base active:bg-muted"
                 >
+                  {part === CUSTOM && <History className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
                   {name}
                 </button>
               ))}

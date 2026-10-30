@@ -63,14 +63,14 @@ export default function InquiryPage() {
       >
         <fieldset className="flex flex-col gap-2">
           <legend className="pb-2 text-sm font-medium">문의 유형</legend>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             {INQUIRY_CATEGORIES.map((c) => (
               <button
                 key={c.value}
                 type="button"
                 aria-pressed={category === c.value}
                 onClick={() => setCategory(c.value)}
-                className={`h-11 rounded-xl border text-sm transition-colors ${
+                className={`h-11 rounded-xl border text-sm transition-colors last:col-span-2 sm:last:col-span-1 ${
                   category === c.value ? 'border-foreground bg-foreground font-semibold text-background' : 'active:bg-muted'
                 }`}
               >

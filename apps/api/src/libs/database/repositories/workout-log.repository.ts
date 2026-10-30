@@ -12,6 +12,22 @@ export class WorkoutLogRepository extends BaseRepository<WorkoutLog> {
     super(repository);
   }
 
+  // 이 트레이너가 일지에 직접 입력한 종목 (기본 종목 제외, 최근 쓴 순) — 운동 추가 창 맨 위
+  async listCustomExerciseNames(trainerId: string) {
+    const rows: { name: string }[] = await this.repository.query(
+      `SELECT e->>'name' AS name
+         FROM workout_log w
+         JOIN member m ON m.id = w.member_id
+         CROSS JOIN jsonb_array_elements(w.exercises) e
+        WHERE m.trainer_id = $1 AND NOT EXISTS (SELECT 1 FROM exercise x WHERE x.name = e->>'name')
+        GROUP BY 1
+        ORDER BY max(w.updated_at) DESC
+        LIMIT 100`,
+      [trainerId],
+    );
+    return rows.map((r) => r.name);
+  }
+
   // 그날 이 트레이너의 연결 중인 회원 일지 (회원 함께 조회)
   listByTrainerAndDate(trainerId: string, date: string) {
     return this.repository

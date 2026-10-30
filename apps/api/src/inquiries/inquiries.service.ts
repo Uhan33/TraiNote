@@ -24,7 +24,7 @@ const toAdminDto = (i: Inquiry): AdminInquiryDto =>
     appVersion: i.appVersion,
   });
 
-const CATEGORY_LABEL: Record<InquiryCategory, string> = { usage: '사용 방법', bug: '오류 신고', feature: '기능 제안', etc: '기타' };
+const CATEGORY_LABEL: Record<InquiryCategory, string> = { usage: '사용 방법', bug: '오류 신고', feature: '기능 제안', exercise: '종목 추가 요청', etc: '기타' };
 
 @Injectable()
 export class InquiriesService {
