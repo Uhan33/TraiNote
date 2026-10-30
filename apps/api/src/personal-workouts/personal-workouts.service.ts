@@ -50,7 +50,7 @@ export class PersonalWorkoutsService {
       await this.pushService.sendToTrainer(member.trainerId, {
         title: `${member.name}님이 개인운동을 기록했어요`,
         body: `${m}월 ${d}일 · ${preview(content || exercises.map((e) => e.name).join(', '))}`,
-        url: `/personal/${member.code}`,
+        url: `/personal/${member.code}?date=${date}`, // 그날 기록 창 바로 열기
       });
     }
   }
@@ -69,10 +69,10 @@ export class PersonalWorkoutsService {
       await this.pushService.sendToTrainer(member.trainerId, {
         title: `${member.name}님이 댓글을 남겼어요`,
         body: preview(content),
-        url: `/personal/${member.code}`,
+        url: `/personal/${member.code}?date=${date}`, // 그날 기록 창 바로 열기
       });
     } else {
-      await this.pushService.sendToMember(member.id, { title: '트레이너가 댓글을 남겼어요', body: preview(content), url: '/member/personal' });
+      await this.pushService.sendToMember(member.id, { title: '트레이너가 댓글을 남겼어요', body: preview(content), url: `/member/personal?date=${date}` });
     }
     return toCommentDto(comment);
   }

@@ -1,13 +1,18 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { MessageSquare } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { MessageSquare, X } from 'lucide-react'
+import { Dialog } from 'radix-ui'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import DateRow from '@/components/DateRow'
+import Modal from '@/components/Modal'
+import { Button } from '@/components/ui/button'
 import { memberViewWorkouts, type MemberViewWorkoutDto } from '@/api/generated'
 import { describeSets, formatDateLabel, fromDateKey } from '@/features/workouts/data'
+import { useOpenDateParam } from '@/lib/useOpenDateParam'
 import { useMemberProfile } from './useMemberProfile'
 
 const PAGE_SIZE = 10 // API 와 동일
 
-// 회원 운동일지 (/member/workouts) — 읽기 전용
+// 회원 운동일지 (/member/workouts) — 읽기 전용. 월별·날짜별 한 줄(개인운동 탭과 같음), 누르면 가운데 창에 전체
 // 트레이너 전용 회원 메모(member.memo)는 API 가 내려주지 않음. 일지 메모는 "트레이너 코멘트"로 노출
 export default function MemberWorkoutsPage() {
   const profile = useMemberProfile()
@@ -36,6 +41,16 @@ export default function MemberWorkoutsPage() {
   // 월별 묶음 (최신순 유지)
   const months = new Map<string, MemberViewWorkoutDto[]>()
   for (const log of all) months.set(log.date.slice(0, 7), [...(months.get(log.date.slice(0, 7)) ?? []), log])
+  // 연 날짜 — 닫히는 애니메이션 동안 내용 유지
+  const [openDate, setOpenDate] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
+  const selected = all.find((l) => l.date === openDate)
+  const openLog = useCallback((date: string) => {
+    setOpenDate(date)
+    setOpen(true)
+  }, [])
+  // 운동일지 도착 알림 → 그날 일지 창
+  useOpenDateParam(logs.data && all.map((l) => l.date), openLog)
 
   return (
     <div className="flex-1 md:overflow-y-auto">
@@ -60,11 +75,19 @@ export default function MemberWorkoutsPage() {
             <h2 className="text-sm font-semibold text-muted-foreground">
               {fromDateKey(`${month}-01`).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })}
             </h2>
-            <div className="mt-3 flex flex-col gap-3">
+            <ul className="mt-2 flex flex-col gap-2">
               {items.map((log) => (
-                <LogCard key={log.date} log={log} />
+                <li key={log.date}>
+                  <DateRow
+                    date={log.date}
+                    primary={log.title || log.exercises.map((e) => e.name).join(', ')}
+                    secondary={log.title && log.exercises.map((e) => e.name).join(', ')}
+                    extra={log.memo && <MessageSquare className="size-4" aria-label="트레이너 코멘트" />}
+                    onOpen={() => openLog(log.date)}
+                  />
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         ))}
 
@@ -76,6 +99,10 @@ export default function MemberWorkoutsPage() {
           </button>
         )}
       </div>
+
+      <Modal open={open && !!selected} onOpenChange={setOpen}>
+        {selected && <LogCard log={selected} />}
+      </Modal>
     </div>
   )
 }
@@ -91,13 +118,18 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function LogCard({ log }: { log: MemberViewWorkoutDto }) {
   return (
-    <article className="rounded-2xl border p-4">
-      <div className="flex items-baseline gap-2">
-        <h3 className="font-semibold">{formatDateLabel(log.date)}</h3>
-        {log.title && <span className="text-sm text-muted-foreground">{log.title}</span>}
+    <article className="p-5">
+      <div className="flex items-center gap-2">
+        <Dialog.Title className="text-lg font-semibold">{formatDateLabel(log.date)}</Dialog.Title>
+        {log.title && <span className="flex-1 text-sm text-muted-foreground">{log.title}</span>}
+        <Dialog.Close asChild>
+          <Button variant="ghost" size="icon" aria-label="닫기" className="-mr-2 ml-auto text-muted-foreground">
+            <X />
+          </Button>
+        </Dialog.Close>
       </div>
 
-      <ul className="mt-3 flex flex-col gap-2">
+      <ul className="mt-3 flex flex-col gap-2 rounded-xl bg-muted p-3">
         {log.exercises.map((exercise, i) => (
           <li key={i} className="flex items-start justify-between gap-4 text-sm">
             <span className="shrink-0 font-medium">{exercise.name}</span>
@@ -111,7 +143,7 @@ function LogCard({ log }: { log: MemberViewWorkoutDto }) {
       </ul>
 
       {log.memo && (
-        <div className="mt-4 rounded-xl bg-muted p-3">
+        <div className="mt-4 rounded-xl border p-3">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <MessageSquare className="size-3.5" /> 트레이너 코멘트
           </p>
