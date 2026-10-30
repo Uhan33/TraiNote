@@ -22,11 +22,11 @@ export class RefreshToken {
   @Column({ name: 'expires_at', type: 'timestamptz' })
   expiresAt: Date;
 
-  // 교체(refresh)·로그아웃 시각. null = 사용 가능
+  // 로그아웃 시각. null = 사용 가능
   @Column({ name: 'revoked_at', type: 'timestamptz', nullable: true })
   revokedAt: Date | null;
 
-  // 교체로 폐기된 경우 새로 발급된 토큰 id. 동시 요청 유예 판단에 사용
+  // 미사용 — 토큰 교체 방식(v0.12.2 까지)에서 쓰던 컬럼. 지울 땐 마이그레이션 필요
   @Column({ name: 'replaced_by_id', type: 'uuid', nullable: true })
   replacedById: string | null;
 

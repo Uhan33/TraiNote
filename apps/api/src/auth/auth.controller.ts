@@ -54,15 +54,15 @@ export class AuthController {
     return trainer;
   }
 
-  // 액세스 토큰 만료 시 호출. 리프레시 토큰도 새로 교체됨
+  // 액세스 토큰 만료 시 호출. 리프레시 토큰은 그대로, 만료만 연장
   @Post('refresh')
   @HttpCode(204)
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiNoContentResponse()
-  @ApiUnauthorizedResponse({ description: '리프레시 토큰 없음·만료·재사용 — 다시 로그인' })
+  @ApiUnauthorizedResponse({ description: '리프레시 토큰 없음·만료·로그아웃됨 — 다시 로그인' })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
-      this.setCookies(res, await this.tokensService.rotate(req.cookies?.[REFRESH_COOKIE] as string | undefined));
+      this.setCookies(res, await this.tokensService.refresh(req.cookies?.[REFRESH_COOKIE] as string | undefined));
     } catch (e) {
       this.clearCookies(res);
       throw e;
@@ -96,7 +96,7 @@ export class AuthController {
 
   private setCookies(res: Response, { accessToken, refreshToken }: Tokens) {
     res.cookie(ACCESS_COOKIE, accessToken, { ...accessCookie(), maxAge: ACCESS_TTL_MS });
-    if (refreshToken) res.cookie(REFRESH_COOKIE, refreshToken, { ...refreshCookie(), maxAge: REFRESH_TTL_MS });
+    res.cookie(REFRESH_COOKIE, refreshToken, { ...refreshCookie(), maxAge: REFRESH_TTL_MS });
   }
 
   private clearCookies(res: Response) {

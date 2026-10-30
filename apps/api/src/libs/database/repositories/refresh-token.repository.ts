@@ -14,21 +14,12 @@ export class RefreshTokenRepository extends BaseRepository<RefreshToken> {
     return this.findOneBy({ tokenHash });
   }
 
-  existsActive(id: string) {
-    return this.existsBy({ id, revokedAt: IsNull() });
-  }
-
   async add(data: Pick<RefreshToken, 'trainerId' | 'tokenHash' | 'expiresAt'>) {
-    return (await this.insertOne(data)).id;
+    await this.insertOne(data);
   }
 
-  // 아직 살아 있을 때만 교체 처리 — 동시 요청 중 하나만 성공 (true = 이 요청이 교체함)
-  async replaceIfActive(id: string, replacedById: string) {
-    return (await this.update({ id, revokedAt: IsNull() }, { revokedAt: new Date(), replacedById })) > 0;
-  }
-
-  async revokeById(id: string) {
-    await this.update({ id }, { revokedAt: new Date() });
+  async extend(id: string, expiresAt: Date) {
+    await this.update({ id }, { expiresAt });
   }
 
   async revokeByHash(tokenHash: string) {
