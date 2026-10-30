@@ -1,10 +1,12 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronRight, MessageCircle, Pencil, X } from 'lucide-react'
+import { MessageCircle, Pencil, X } from 'lucide-react'
 import { Dialog } from 'radix-ui'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import DateRow from '@/components/DateRow'
 import Modal from '@/components/Modal'
 import { Button } from '@/components/ui/button'
 import type { PersonalWorkoutCommentDto, PersonalWorkoutDto } from '@/api/generated'
+import { useOpenDateParam } from '@/lib/useOpenDateParam'
 import { describeSets, formatDateLabel, fromDateKey } from '@/features/workouts/data'
 
 const PAGE_SIZE = 10 // API 와 동일
@@ -62,6 +64,27 @@ export default function PersonalFeed({
   const [openDate, setOpenDate] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const selected = all.find((w) => w.date === openDate)
+  const openWorkout = useCallback(
+    (w: PersonalWorkoutDto) => {
+      setOpenDate(w.date)
+      setOpen(true)
+      // 실패해도 다음에 열 때 다시 시도 — 목록·회원별 수는 성공했을 때만 갱신
+      if (markRead && w.unread) {
+        void markRead(w.date).then(() =>
+          queryClient.invalidateQueries({
+            predicate: (q) => q.queryKey[0] === queryKey || q.queryKey[0] === '/api/v1/personal-workouts/unread',
+          }),
+        )
+      }
+    },
+    [markRead, queryClient, queryKey],
+  )
+  // 새 기록·댓글 알림 → 그날 기록 창
+  const pages = list.data?.pages
+  useOpenDateParam(
+    pages && pages.flat().map((w) => w.date),
+    useCallback((date: string) => pages && openWorkout(pages.flat().find((w) => w.date === date)!), [pages, openWorkout]),
+  )
 
   return (
     <div className="flex flex-col">
@@ -77,18 +100,7 @@ export default function PersonalFeed({
                 <PersonalRow
                   workout={w}
                   unread={!!markRead && w.unread}
-                  onOpen={() => {
-                    setOpenDate(w.date)
-                    setOpen(true)
-                    // 실패해도 다음에 열 때 다시 시도 — 목록·회원별 수는 성공했을 때만 갱신
-                    if (markRead && w.unread) {
-                      void markRead(w.date).then(() =>
-                        queryClient.invalidateQueries({
-                          predicate: (q) => q.queryKey[0] === queryKey || q.queryKey[0] === '/api/v1/personal-workouts/unread',
-                        }),
-                      )
-                    }
-                  }}
+                  onOpen={() => openWorkout(w)}
                 />
               </li>
             ))}
@@ -125,30 +137,25 @@ export default function PersonalFeed({
   )
 }
 
-// 목록 한 줄 — 날짜, 종목 이름, 본문 첫 줄, 댓글 수. unread: 빨간 점
+// 목록 한 줄 — 종목 이름, 본문 첫 줄, 댓글 수. unread: 빨간 점
 function PersonalRow({ workout, unread, onOpen }: { workout: PersonalWorkoutDto; unread: boolean; onOpen: () => void }) {
   const names = workout.exercises.map((e) => e.name).join(', ')
   const firstLine = workout.content.split('\n')[0]
   return (
-    <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 rounded-2xl border p-4 text-left active:bg-muted md:hover:bg-muted/60">
-      <span className="w-14 shrink-0 font-semibold">
-        {fromDateKey(workout.date).toLocaleDateString('ko-KR', { day: 'numeric' })}
-        <span className="block text-xs font-normal text-muted-foreground">
-          {fromDateKey(workout.date).toLocaleDateString('ko-KR', { weekday: 'long' })}
-        </span>
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{names || firstLine}</span>
-        {names && firstLine && <span className="mt-0.5 block truncate text-sm text-muted-foreground">{firstLine}</span>}
-      </span>
-      {workout.comments.length > 0 && (
-        <span className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
-          <MessageCircle className="size-4" /> {workout.comments.length}
-        </span>
-      )}
-      {unread && <span aria-label="새 기록" className="size-2 shrink-0 rounded-full bg-red-500" />}
-      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
-    </button>
+    <DateRow
+      date={workout.date}
+      primary={names || firstLine}
+      secondary={names && firstLine}
+      extra={
+        workout.comments.length > 0 && (
+          <>
+            <MessageCircle className="size-4" /> {workout.comments.length}
+          </>
+        )
+      }
+      unread={unread}
+      onOpen={onOpen}
+    />
   )
 }
 

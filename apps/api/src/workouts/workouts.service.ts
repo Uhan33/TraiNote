@@ -95,7 +95,7 @@ export class WorkoutsService {
     await this.pushService.sendToMember(member.id, {
       title: `${member.name}님, 운동일지가 도착했어요`,
       body: `${m}월 ${d}일 운동 기록을 확인해 보세요`,
-      url: '/member/workouts',
+      url: `/member/workouts?date=${log.logDate}`, // 그날 일지 창 바로 열기
     });
   }
 }
