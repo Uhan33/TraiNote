@@ -11,6 +11,8 @@ import { InquiriesModule } from './inquiries/inquiries.module.js';
 import { DatabaseModule } from './libs/database/database.module.js';
 import { MemberViewModule } from './member-view/member-view.module.js';
 import { MembersModule } from './members/members.module.js';
+import { NoticesModule } from './notices/notices.module.js';
+import { PersonalWorkoutsModule } from './personal-workouts/personal-workouts.module.js';
 import { WorkoutsModule } from './workouts/workouts.module.js';
 
 @Module({
@@ -27,6 +29,8 @@ import { WorkoutsModule } from './workouts/workouts.module.js';
     InquiriesModule,
     ExercisesModule,
     PushModule,
+    PersonalWorkoutsModule,
+    NoticesModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

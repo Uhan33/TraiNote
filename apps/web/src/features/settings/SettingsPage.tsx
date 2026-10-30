@@ -1,7 +1,7 @@
-import { Bell, ChevronRight, History, Inbox, LogOut, MessageSquare } from 'lucide-react'
+import { Bell, ChevronRight, History, Inbox, LogOut, Megaphone, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
-import { useAuthMe } from '@/api/generated'
+import { useAuthMe, useNoticesList } from '@/api/generated'
 import { useLogout } from '@/features/auth/useLogout'
 import { pushSupported } from '@/lib/push'
 import { isStandalone } from '@/lib/pwa'
@@ -9,6 +9,8 @@ import { isStandalone } from '@/lib/pwa'
 export default function SettingsPage() {
   const me = useAuthMe({ query: { staleTime: Infinity } })
   const logout = useLogout()
+  const notices = useNoticesList()
+  const unreadNotices = notices.data?.filter((n) => !n.read).length ?? 0
 
   return (
     <div className="flex w-full max-w-2xl flex-1 flex-col px-5 pt-6 pb-10 lg:px-8">
@@ -42,6 +44,16 @@ export default function SettingsPage() {
             <ChevronRight className="ml-auto size-5 text-muted-foreground" />
           </Link>
         )}
+        <Link to="/settings/notices" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
+          <Megaphone className="size-5 text-muted-foreground" /> 공지사항
+          <span className="ml-auto" />
+          {unreadNotices > 0 && (
+            <span aria-label={`안 읽은 공지 ${unreadNotices}개`} className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white">
+              {unreadNotices}
+            </span>
+          )}
+          <ChevronRight className="size-5 text-muted-foreground" />
+        </Link>
         <Link to="/settings/inquiry" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
           <MessageSquare className="size-5 text-muted-foreground" /> 문의하기
           <ChevronRight className="ml-auto size-5 text-muted-foreground" />

@@ -1,6 +1,7 @@
-import { Bell, ChevronRight, LogOut } from 'lucide-react'
+import { Bell, ChevronRight, LogOut, Megaphone } from 'lucide-react'
 import { Link } from 'react-router'
 import ThemeToggle from '@/components/ThemeToggle'
+import { useMemberViewNotices } from '@/api/generated'
 import { pushSupported } from '@/lib/push'
 import { isStandalone } from '@/lib/pwa'
 import { useMemberLogout, useMemberProfile } from './useMemberProfile'
@@ -8,6 +9,8 @@ import { useMemberLogout, useMemberProfile } from './useMemberProfile'
 export default function MemberSettingsPage() {
   const profile = useMemberProfile()
   const logout = useMemberLogout()
+  const notices = useMemberViewNotices()
+  const unreadNotices = notices.data?.filter((n) => !n.read).length ?? 0
 
   return (
     <div className="flex w-full max-w-2xl flex-1 flex-col px-5 pt-6 pb-10 lg:px-8">
@@ -45,6 +48,16 @@ export default function MemberSettingsPage() {
             <ChevronRight className="size-5 text-muted-foreground" />
           </Link>
         )}
+        <Link to="/member/settings/notices" className="flex h-14 items-center gap-3 px-4 active:bg-muted">
+          <Megaphone className="size-5" />
+          <span className="flex-1">공지사항</span>
+          {unreadNotices > 0 && (
+            <span aria-label={`안 읽은 공지 ${unreadNotices}개`} className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white">
+              {unreadNotices}
+            </span>
+          )}
+          <ChevronRight className="size-5 text-muted-foreground" />
+        </Link>
         <button type="button" onClick={logout} className="flex h-14 w-full items-center gap-3 px-4 text-left text-destructive active:bg-muted">
           <LogOut className="size-5" /> 나가기
         </button>

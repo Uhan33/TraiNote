@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOkResponse, ApiQuery, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiQuery, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Response } from 'express';
 import { BodyService } from '../body/body.service.js';
@@ -12,6 +12,13 @@ import { CurrentMember, MEMBER_COOKIE, MemberAuthGuard } from './member-auth.gua
 import { MEMBER_SESSION_DAYS, MemberViewService, PAGE_SIZE } from './member-view.service.js';
 import { PushService } from '../push/push.service.js';
 import { PushSubscriptionRepository } from '../libs/database/repositories/push-subscription.repository.js';
+import { ExerciseRepository } from '../libs/database/repositories/exercise.repository.js';
+import { NoticeRepository } from '../libs/database/repositories/notice.repository.js';
+import { listNotices, markNoticeRead, NoticeDto } from '../notices/notices.js';
+import { PersonalWorkoutRepository } from '../libs/database/repositories/personal-workout.repository.js';
+import { ExerciseCatalogDto } from '../exercises/exercises.controller.js';
+import { PersonalWorkoutCommentDto, PersonalWorkoutDto, SaveCommentDto, SavePersonalWorkoutDto } from '../personal-workouts/dto.js';
+import { PersonalWorkoutsService } from '../personal-workouts/personal-workouts.service.js';
 
 // 회원 토큰 쿠키는 회원 API 에만 전송
 const memberCookie = (): CookieOptions => ({
@@ -31,6 +38,10 @@ export class MemberViewController {
     private readonly bodyService: BodyService,
     private readonly pushService: PushService,
     private readonly pushSubscriptionRepository: PushSubscriptionRepository,
+    private readonly personalWorkoutsService: PersonalWorkoutsService,
+    private readonly personalWorkoutRepository: PersonalWorkoutRepository,
+    private readonly exerciseRepository: ExerciseRepository,
+    private readonly noticeRepository: NoticeRepository,
   ) {}
 
   @Post('session')
@@ -83,6 +94,93 @@ export class MemberViewController {
   @ApiUnauthorizedResponse()
   bodyRecords(@CurrentMember() member: Member) {
     return this.bodyService.listByMemberId(member.id);
+  }
+
+  // 개인운동 — 회원이 직접 기록, 담당 트레이너와 댓글
+  @Get('me/personal-workouts')
+  @UseGuards(MemberAuthGuard)
+  @ApiQuery({ name: 'before', required: false, example: '2026-10-30', description: '이 날짜 이전 기록 (무한 스크롤)' })
+  @ApiOkResponse({ type: [PersonalWorkoutDto], description: `최신순 최대 ${PAGE_SIZE}개` })
+  @ApiUnauthorizedResponse()
+  personalWorkouts(@CurrentMember() member: Member, @Query('before') before?: string) {
+    return this.personalWorkoutsService.list(member, before);
+  }
+
+  @Put('me/personal-workouts/:date')
+  @UseGuards(MemberAuthGuard)
+  @HttpCode(204)
+  @ApiNoContentResponse({ description: '같은 날짜면 덮어쓰기. 처음 작성하면 트레이너에게 알림' })
+  @ApiBadRequestResponse({ description: '종목·내용 둘 다 비어 있음' })
+  @ApiUnauthorizedResponse()
+  savePersonalWorkout(@CurrentMember() member: Member, @Param('date') date: string, @Body() dto: SavePersonalWorkoutDto) {
+    return this.personalWorkoutsService.save(member, date, dto);
+  }
+
+  @Delete('me/personal-workouts/:date')
+  @UseGuards(MemberAuthGuard)
+  @HttpCode(204)
+  @ApiNoContentResponse({ description: '댓글도 함께 삭제' })
+  @ApiUnauthorizedResponse()
+  removePersonalWorkout(@CurrentMember() member: Member, @Param('date') date: string) {
+    return this.personalWorkoutsService.remove(member, date);
+  }
+
+  @Post('me/personal-workouts/:date/comments')
+  @UseGuards(MemberAuthGuard)
+  @ApiCreatedResponse({ type: PersonalWorkoutCommentDto })
+  @ApiNotFoundResponse()
+  @ApiUnauthorizedResponse()
+  addPersonalWorkoutComment(@CurrentMember() member: Member, @Param('date') date: string, @Body() dto: SaveCommentDto) {
+    return this.personalWorkoutsService.addComment(member, date, 'member', dto);
+  }
+
+  @Delete('me/personal-workouts/:date/comments/:id')
+  @UseGuards(MemberAuthGuard)
+  @HttpCode(204)
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({ description: '없거나 내가 쓴 댓글이 아님' })
+  @ApiUnauthorizedResponse()
+  async removePersonalWorkoutComment(
+    @CurrentMember() member: Member,
+    @Param('date') date: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    await this.personalWorkoutsService.removeComment(member, date, id, 'member');
+  }
+
+  // 개인운동 운동 추가 창 — 기본 종목 + 이 회원이 직접 입력했던 종목
+  @Get('exercises')
+  @UseGuards(MemberAuthGuard)
+  @ApiOkResponse({ type: [ExerciseCatalogDto] })
+  @ApiUnauthorizedResponse()
+  exercises(): Promise<ExerciseCatalogDto[]> {
+    return this.exerciseRepository.listAll();
+  }
+
+  @Get('me/exercises/custom')
+  @UseGuards(MemberAuthGuard)
+  @ApiOkResponse({ type: [String], description: '기본 종목에 없는 이름, 최근 쓴 순' })
+  @ApiUnauthorizedResponse()
+  customExercises(@CurrentMember() member: Member): Promise<string[]> {
+    return this.personalWorkoutRepository.listCustomExerciseNames(member.id);
+  }
+
+  @Get('notices')
+  @UseGuards(MemberAuthGuard)
+  @ApiOkResponse({ type: [NoticeDto], description: '최신순' })
+  @ApiUnauthorizedResponse()
+  notices(@CurrentMember() member: Member): Promise<NoticeDto[]> {
+    return listNotices(this.noticeRepository, { audience: 'member', id: member.id });
+  }
+
+  @Post('notices/:id/read')
+  @UseGuards(MemberAuthGuard)
+  @HttpCode(204)
+  @ApiNoContentResponse({ description: '읽음 (이미 읽었으면 그대로)' })
+  @ApiNotFoundResponse()
+  @ApiUnauthorizedResponse()
+  markNoticeRead(@CurrentMember() member: Member, @Param('id', ParseUUIDPipe) id: string) {
+    return markNoticeRead(this.noticeRepository, id, { audience: 'member', id: member.id });
   }
 
   // 알림 받기 — 브라우저 구독에 필요한 공개 키

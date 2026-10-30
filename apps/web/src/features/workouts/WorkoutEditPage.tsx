@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, CircleCheck, ChevronLeft, History, Minus, Plus, Search, Trash2 } from 'lucide-react'
+import { Check, CircleCheck, ChevronLeft, History, Minus, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -23,9 +23,10 @@ import {
   type MemberDto,
 } from '@/api/generated'
 import CopyId from './CopyId'
+import ExercisePicker from './ExercisePicker'
 import DateNav from './DateNav'
 import MemberMenu from './MemberMenu'
-import { EMPTY_FORM, formatDateLabel, groupExercises, lastUnit, rememberUnit, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
+import { EMPTY_FORM, formatDateLabel, lastUnit, rememberUnit, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
 import { backupKey, readBackup } from './backup'
 import { useAutosave, type SaveStatus } from './useAutosave'
 
@@ -162,6 +163,10 @@ function WorkoutEditor({
   const [completing, setCompleting] = useState(false)
   const [completeError, setCompleteError] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  // 종목은 운영자가 가끔 DB 에 추가하는 정도라 한 번 받으면 앱을 다시 열 때까지 재요청 안 함
+  const catalog = useExercisesList({ query: { staleTime: Infinity } })
+  // 직접 입력했던 종목 — 창 열 때마다 새로 받아 방금 쓴 종목도 보이게
+  const custom = useExercisesListCustom({ query: { enabled: pickerOpen } })
   const previous = useWorkoutsPrevious(member.code, { before: date }, { query: { retry: false, enabled: workout.exercises.length === 0 } })
   // 서버에 이 날 일지가 있는지 — 생기거나 없어질 때만 목록·달력·남은 PT 를 다시 불러옴
   const exists = useRef(initial.exercises.length > 0)
@@ -368,6 +373,8 @@ function WorkoutEditor({
       <ExercisePicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
+        catalog={catalog.data}
+        custom={custom.data}
         onPick={(name) => {
           update((w) => void w.exercises.push({ name, unit: lastUnit(name), sets: [{ kg: '', reps: '', done: false }] }))
           setPickerOpen(false)
@@ -425,82 +432,5 @@ function SetRow({ index, set, onChange }: { index: number; set: FormSet; onChang
         <Check className="size-5" />
       </button>
     </>
-  )
-}
-
-const CUSTOM = '직접 입력'
-const CUSTOM_PREVIEW = 5
-
-function ExercisePicker({
-  open,
-  onOpenChange,
-  onPick,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onPick: (name: string) => void
-}) {
-  const [query, setQuery] = useState('')
-  const [showAllCustom, setShowAllCustom] = useState(false)
-  const q = query.trim()
-  // 종목은 운영자가 가끔 DB 에 추가하는 정도라 한 번 받으면 앱을 다시 열 때까지 재요청 안 함
-  const catalog = useExercisesList({ query: { staleTime: Infinity } })
-  // 직접 입력했던 종목 — 창 열 때마다 새로 받아 방금 쓴 종목도 보이게. 기본 목록보다 위에
-  const custom = useExercisesListCustom({ query: { enabled: open } })
-  const groups = [[CUSTOM, custom.data ?? []] as [string, string[]], ...groupExercises(catalog.data ?? [])]
-    .map(([part, names]) => [part, names.filter((n) => n.includes(q))] as const)
-    .filter(([, names]) => names.length > 0)
-  const exactMatch = groups.some(([, names]) => names.includes(q))
-  // 직접 입력은 검색 전엔 최근 5개만 — 쌓여도 기본 목록이 밀려나지 않게
-  const hiddenCustom = !q && !showAllCustom ? Math.max(0, (custom.data?.length ?? 0) - CUSTOM_PREVIEW) : 0
-
-  return (
-    <Drawer open={open} onOpenChange={(o) => {
-        onOpenChange(o)
-        if (!o) {
-          setQuery('')
-          setShowAllCustom(false)
-        }
-      }}>
-      <DrawerContent className="mx-auto h-[85dvh] max-w-md">
-        <DrawerHeader>
-          <DrawerTitle>운동 추가</DrawerTitle>
-        </DrawerHeader>
-        <div className="px-4 pb-2">
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="운동 이름 검색" className="h-11 pl-9 text-base md:text-base" />
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 pb-6">
-          {q && !exactMatch && (
-            <button type="button" onClick={() => onPick(q)} className="flex h-12 w-full items-center gap-2 rounded-lg px-2 text-left active:bg-muted">
-              <Plus className="size-4" /> '{q}' 직접 추가
-            </button>
-          )}
-          {groups.map(([part, names]) => (
-            <div key={part} className="mt-3">
-              <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">{part}</p>
-              {(part === CUSTOM && hiddenCustom ? names.slice(0, CUSTOM_PREVIEW) : names).map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => onPick(name)}
-                  className="flex h-12 w-full items-center gap-2 rounded-lg px-2 text-left text-base active:bg-muted"
-                >
-                  {part === CUSTOM && <History className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
-                  {name}
-                </button>
-              ))}
-              {part === CUSTOM && hiddenCustom > 0 && (
-                <button type="button" onClick={() => setShowAllCustom(true)} className="px-2 py-1 text-xs text-muted-foreground underline-offset-2 active:underline">
-                  이전 기록 더보기
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </DrawerContent>
-    </Drawer>
   )
 }

@@ -30,7 +30,7 @@ export default function AppShell({
           <ThemeToggle />
         </div>
         <ul className="flex flex-col gap-1">
-          {tabs.map(({ to, label, icon: Icon }) => (
+          {tabs.map(({ to, label, icon: Icon, badge }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -38,7 +38,7 @@ export default function AppShell({
                   `flex h-11 items-center gap-3 rounded-lg px-3 ${isActive ? 'bg-muted font-semibold' : 'text-muted-foreground hover:bg-muted/60'}`
                 }
               >
-                <Icon className="size-5" />
+                <TabIcon icon={Icon} badge={badge} className="size-5" />
                 {label}
               </NavLink>
             </li>
@@ -66,7 +66,7 @@ export default function AppShell({
       >
         <InstallHint />
         <ul className="mx-auto grid h-16 max-w-md grid-flow-col auto-cols-fr">
-          {tabs.map(({ to, label, icon: Icon }) => (
+          {tabs.map(({ to, label, icon: Icon, badge }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -74,7 +74,7 @@ export default function AppShell({
                   `flex h-full flex-col items-center justify-center gap-1 text-xs ${isActive ? 'font-semibold text-foreground' : 'text-muted-foreground'}`
                 }
               >
-                <Icon className="size-6" />
+                <TabIcon icon={Icon} badge={badge} className="size-6" />
                 {label}
               </NavLink>
             </li>
@@ -82,6 +82,15 @@ export default function AppShell({
         </ul>
       </nav>
     </div>
+  )
+}
+
+function TabIcon({ icon: Icon, badge, className }: { icon: Tab['icon']; badge?: boolean; className: string }) {
+  return (
+    <span className="relative">
+      <Icon className={className} />
+      {badge && <span aria-label="새 기록" className="absolute -top-0.5 -right-1 size-2 rounded-full bg-red-500" />}
+    </span>
   )
 }
 
