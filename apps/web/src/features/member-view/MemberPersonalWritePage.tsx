@@ -13,6 +13,7 @@ import {
   type PersonalWorkoutDto,
 } from '@/api/generated'
 import ExercisePicker from '@/features/workouts/ExercisePicker'
+import UnitToggle from '@/features/workouts/UnitToggle'
 import { lastUnit, shiftDateKey, toApi, todayKey, toForm, type FormExercise } from '@/features/workouts/data'
 import { PERSONAL_KEY } from './MemberPersonalPage'
 
@@ -109,7 +110,7 @@ function Editor({ date, initial }: { date: string; initial: PersonalWorkoutDto |
           {exercise.sets.length > 0 && (
             <div className="mt-2 grid grid-cols-[2rem_1fr_1fr] items-center gap-2 text-center">
               <span className="text-xs text-muted-foreground">세트</span>
-              <span className="text-xs text-muted-foreground">{exercise.unit}</span>
+              <UnitToggle name={exercise.name} unit={exercise.unit} onChange={(unit) => update((l) => void (l[ei].unit = unit))} />
               <span className="text-xs text-muted-foreground">회</span>
               {exercise.sets.map((set, si) => (
                 <SetInputs

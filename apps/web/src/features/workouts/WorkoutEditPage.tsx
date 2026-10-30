@@ -24,9 +24,10 @@ import {
 } from '@/api/generated'
 import CopyId from './CopyId'
 import ExercisePicker from './ExercisePicker'
+import UnitToggle from './UnitToggle'
 import DateNav from './DateNav'
 import MemberMenu from './MemberMenu'
-import { EMPTY_FORM, formatDateLabel, lastUnit, rememberUnit, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
+import { EMPTY_FORM, formatDateLabel, lastUnit, toApi, todayKey, toForm, type FormSet, type WorkoutForm } from './data'
 import { backupKey, readBackup } from './backup'
 import { useAutosave, type SaveStatus } from './useAutosave'
 
@@ -286,26 +287,7 @@ function WorkoutEditor({
 
             <div className="grid grid-cols-[2rem_1fr_1fr_2.75rem] items-center gap-2 text-center">
               <span className="text-xs text-muted-foreground">세트</span>
-              {/* 무게 단위 — 눌러서 kg ⇄ lb (기구가 파운드 표기일 때) */}
-              <button
-                type="button"
-                aria-label={`무게 단위 ${exercise.unit}, 눌러서 ${exercise.unit === 'kg' ? 'lb' : 'kg'}로 바꾸기`}
-                onClick={() => {
-                  const unit = exercise.unit === 'kg' ? 'lb' : 'kg'
-                  rememberUnit(exercise.name, unit)
-                  update((w) => void (w.exercises[ei].unit = unit))
-                }}
-                className="mx-auto flex h-6 items-center rounded-full bg-muted p-0.5 text-xs"
-              >
-                {(['kg', 'lb'] as const).map((u) => (
-                  <span
-                    key={u}
-                    className={`rounded-full px-2 py-0.5 ${exercise.unit === u ? 'bg-background font-semibold text-foreground shadow-sm' : 'text-muted-foreground'}`}
-                  >
-                    {u}
-                  </span>
-                ))}
-              </button>
+              <UnitToggle name={exercise.name} unit={exercise.unit} onChange={(unit) => update((w) => void (w.exercises[ei].unit = unit))} />
               <span className="text-xs text-muted-foreground">회</span>
               <span className="text-xs text-muted-foreground">완료</span>
               {exercise.sets.map((set, si) => {
