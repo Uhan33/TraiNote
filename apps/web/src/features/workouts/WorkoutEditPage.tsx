@@ -429,6 +429,7 @@ function SetRow({ index, set, onChange }: { index: number; set: FormSet; onChang
 }
 
 const CUSTOM = '직접 입력'
+const CUSTOM_PREVIEW = 5
 
 function ExercisePicker({
   open,
@@ -440,6 +441,7 @@ function ExercisePicker({
   onPick: (name: string) => void
 }) {
   const [query, setQuery] = useState('')
+  const [showAllCustom, setShowAllCustom] = useState(false)
   const q = query.trim()
   // 종목은 운영자가 가끔 DB 에 추가하는 정도라 한 번 받으면 앱을 다시 열 때까지 재요청 안 함
   const catalog = useExercisesList({ query: { staleTime: Infinity } })
@@ -449,11 +451,16 @@ function ExercisePicker({
     .map(([part, names]) => [part, names.filter((n) => n.includes(q))] as const)
     .filter(([, names]) => names.length > 0)
   const exactMatch = groups.some(([, names]) => names.includes(q))
+  // 직접 입력은 검색 전엔 최근 5개만 — 쌓여도 기본 목록이 밀려나지 않게
+  const hiddenCustom = !q && !showAllCustom ? Math.max(0, (custom.data?.length ?? 0) - CUSTOM_PREVIEW) : 0
 
   return (
     <Drawer open={open} onOpenChange={(o) => {
         onOpenChange(o)
-        if (!o) setQuery('')
+        if (!o) {
+          setQuery('')
+          setShowAllCustom(false)
+        }
       }}>
       <DrawerContent className="mx-auto h-[85dvh] max-w-md">
         <DrawerHeader>
@@ -474,7 +481,7 @@ function ExercisePicker({
           {groups.map(([part, names]) => (
             <div key={part} className="mt-3">
               <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">{part}</p>
-              {names.map((name) => (
+              {(part === CUSTOM && hiddenCustom ? names.slice(0, CUSTOM_PREVIEW) : names).map((name) => (
                 <button
                   key={name}
                   type="button"
@@ -485,6 +492,11 @@ function ExercisePicker({
                   {name}
                 </button>
               ))}
+              {part === CUSTOM && hiddenCustom > 0 && (
+                <button type="button" onClick={() => setShowAllCustom(true)} className="px-2 py-1 text-xs text-muted-foreground underline-offset-2 active:underline">
+                  이전 기록 더보기
+                </button>
+              )}
             </div>
           ))}
         </div>
